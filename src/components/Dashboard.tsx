@@ -1,28 +1,75 @@
+
 import React, { useState } from 'react';
+import { createTask } from '../api';
 
 const Dashboard: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
+  // Task form state
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [peopleNeeded, setPeopleNeeded] = useState(1);
+  const [urgency, setUrgency] = useState('Normal');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleTaskSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('You must be logged in to post a task.');
+        setLoading(false);
+        return;
+      }
+      // Get user id from localStorage
+      const createdBy = localStorage.getItem('userId');
+      if (!createdBy) {
+        setError('User ID not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      const res = await createTask({ title, description, peopleNeeded, urgency, createdBy }, token);
+      if (res._id) {
+        setSuccess('Task posted successfully!');
+        setTitle('');
+        setDescription('');
+        setPeopleNeeded(1);
+        setUrgency('Normal');
+      } else {
+        setError(res.message || 'Failed to post task');
+      }
+    } catch (err) {
+      setError('Failed to post task');
+    }
+    setLoading(false);
+  };
 
   return (
     <main style={{ maxWidth: 600, margin: '40px auto' }}>
       {!showProfile ? (
         <section className="section active">
           <h2>Create New Task / Emergency</h2>
-          <form>
+          <form onSubmit={handleTaskSubmit}>
             <label>Task Title:</label>
-            <input type="text" name="title" placeholder="e.g. Food Distribution" required />
+            <input type="text" name="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Food Distribution" required />
             <label>Description:</label>
-            <textarea name="description" rows={4} placeholder="Describe the task..." required />
+            <textarea name="description" rows={4} value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the task..." required />
             <label>Number of Volunteers Needed:</label>
-            <input type="number" name="peopleNeeded" min={1} required />
+            <input type="number" name="peopleNeeded" min={1} value={peopleNeeded} onChange={e => setPeopleNeeded(Number(e.target.value))} required />
             <label>Urgency Level:</label>
-            <select name="urgency">
+            <select name="urgency" value={urgency} onChange={e => setUrgency(e.target.value)}>
               <option>Normal</option>
               <option>Urgent</option>
               <option>Emergency</option>
             </select>
-            <button type="submit" className="get-started">Post Task</button>
+            <button type="submit" className="get-started" disabled={loading}>{loading ? 'Posting...' : 'Post Task'}</button>
           </form>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+          {success && <p style={{ color: 'green' }}>{success}</p>}
         </section>
       ) : (
         <section className="section">
