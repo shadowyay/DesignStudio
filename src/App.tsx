@@ -1,6 +1,9 @@
-import './App.css'
+import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Support from './pages/Support';
 import AuthForm from './components/AuthForm';
 import Dashboard from './components/Dashboard';
 import VolunteerDashboard from './components/VolunteerDashboard';
@@ -11,6 +14,9 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/support" element={<Support />} />
           <Route path="/user/auth" element={<AuthForm />} />
           <Route path="/user/dashboard" element={<Dashboard />} />
           <Route path="/volunteer/auth" element={<AuthForm isVolunteer />} />
@@ -21,4 +27,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

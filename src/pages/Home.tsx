@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import RoleModal from '../components/RoleModal';
 
 const Home: React.FC = () => {
@@ -9,10 +10,10 @@ const Home: React.FC = () => {
       <header>
         <h1>Micro Volunteer Platform</h1>
         <nav>
-          <a href="#home">Home</a>
-          <a href="#about">About</a>
-          <a href="#contact">Contact</a>
-          <a href="#support">Support</a>
+          <Link to="/">Home</Link>
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/support">Support</Link>
         </nav>
       </header>
       <main>
@@ -21,7 +22,6 @@ const Home: React.FC = () => {
           <p>Connecting volunteers and those in need with ease and efficiency.</p>
           <button className="get-started" onClick={() => setModalOpen(true)}>Get Started</button>
         </section>
-        {/* About, Contact, Support sections can be added here */}
       </main>
       <RoleModal open={modalOpen} onClose={() => setModalOpen(false)} />
       <footer>
