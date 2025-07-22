@@ -1,8 +1,18 @@
 
 import React, { useState } from 'react';
 import { createTask } from '../api';
+import { getUserTasks } from '../api';
 
 const Dashboard: React.FC = () => {
+  // User's posted tasks state
+  const [userTasks, setUserTasks] = useState<any[]>([]);
+  React.useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      getUserTasks(userId).then((res: any) => setUserTasks(Array.isArray(res) ? res : []));
+    }
+  }, []);
+  const [amount, setAmount] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   // Task form state
   const [title, setTitle] = useState('');
@@ -15,6 +25,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // ...existing code...
 
   const handleTaskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +46,7 @@ const Dashboard: React.FC = () => {
         setLoading(false);
         return;
       }
-      const res = await createTask({ title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime: endTime || undefined }, token);
+      const res = await createTask({ title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime: endTime || undefined, amount: Number(amount) }, token);
       if (res._id) {
         setSuccess('Task posted successfully!');
         setTitle('');
@@ -45,6 +56,7 @@ const Dashboard: React.FC = () => {
         setLocation('');
         setApproxStartTime('');
         setEndTime('');
+        setAmount('');
       } else {
         setError(res.message || 'Failed to post task');
       }
@@ -60,6 +72,9 @@ const Dashboard: React.FC = () => {
         <section className="section active">
           <h2>Create New Task / Emergency</h2>
           <form onSubmit={handleTaskSubmit}>
+            <label>Amount to Pay:</label>
+            <input type="number" name="amount" min={0} value={amount} onChange={e => setAmount(e.target.value)} required />
+            <small style={{ color: 'orange' }}>You will pay this amount. Extra taxes may apply.</small>
             <label>Task Title:</label>
             <input type="text" name="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Food Distribution" required />
             <label>Description:</label>
@@ -82,6 +97,23 @@ const Dashboard: React.FC = () => {
           </form>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           {success && <p style={{ color: 'green' }}>{success}</p>}
+          <button className="get-started" style={{ marginBottom: 16 }} onClick={() => setShowProfile(false)}>Create New Task</button>
+          <h3>Your Posted Tasks</h3>
+          <div id="userTaskList">
+            {userTasks.length === 0 ? <p>No tasks posted yet.</p> : null}
+            {userTasks.map(task => (
+              <div key={task._id} style={{ border: '1px solid #888', borderRadius: 6, padding: 10, marginBottom: 10 }}>
+                <h4>{task.title}</h4>
+                <p>{task.description}</p>
+                <p><b>Location:</b> {task.location}</p>
+                <p><b>Amount:</b> ₹{task.amount}</p>
+                <p><b>Status:</b> {task.accepted ? 'Accepted' : 'Pending'}</p>
+                {task.accepted && task.acceptedBy && task.acceptedBy.name && (
+                  <p><b>Accepted By:</b> {task.acceptedBy.name} ({task.acceptedBy.email})</p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
       ) : (
         <section className="section">

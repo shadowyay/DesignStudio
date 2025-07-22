@@ -1,3 +1,16 @@
+export async function getUserTasks(userId: string) {
+  const res = await fetch(`${API_URL}/tasks?createdBy=${userId}`);
+  return res.json();
+}
+
+export async function acceptTask(taskId: string, volunteerId: string) {
+  const res = await fetch(`${API_URL}/tasks/${taskId}/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ volunteerId })
+  });
+  return res.json();
+}
 // API utility for frontend to connect to backend
 export const API_URL = 'http://localhost:5000/api';
 

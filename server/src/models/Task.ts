@@ -9,6 +9,9 @@ export interface ITask extends Document {
   location: string;
   approxStartTime?: Date;
   endTime?: Date;
+  amount: number;
+  accepted: boolean;
+  acceptedBy?: mongoose.Types.ObjectId;
 }
 
 const TaskSchema: Schema = new Schema({
@@ -19,7 +22,10 @@ const TaskSchema: Schema = new Schema({
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   location: { type: String, required: true },
   approxStartTime: { type: Date },
-  endTime: { type: Date }
+  endTime: { type: Date },
+  amount: { type: Number, required: true },
+  accepted: { type: Boolean, default: false },
+  acceptedBy: { type: Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 export default mongoose.model<ITask>('Task', TaskSchema);

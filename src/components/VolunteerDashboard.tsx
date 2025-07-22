@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { getTasks } from '../api';
+import { getTasks, acceptTask } from '../api';
 
 const VolunteerDashboard: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [accepting, setAccepting] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     if (!showProfile) {
@@ -21,6 +23,29 @@ const VolunteerDashboard: React.FC = () => {
     }
   }, [showProfile]);
 
+  const handleAccept = async (taskId: string) => {
+    const volunteerId = localStorage.getItem('userId');
+    if (!volunteerId) {
+      setMessage('You must be logged in as a volunteer to accept tasks.');
+      return;
+    }
+    setAccepting(taskId);
+    setMessage('');
+    try {
+      const result = await acceptTask(taskId, volunteerId);
+      if (result.success !== false && !result.error) {
+        setMessage('Task accepted!');
+      } else {
+        setMessage(result.message || 'Could not accept task.');
+      }
+      // Refresh tasks after accepting
+      getTasks().then(res => setTasks(Array.isArray(res) ? res : []));
+    } catch (err) {
+      setMessage('Error accepting task.');
+    }
+    setAccepting(null);
+  };
+
   return (
     <main>
       {!showProfile ? (
@@ -28,6 +53,7 @@ const VolunteerDashboard: React.FC = () => {
           <h2>Available Tasks</h2>
           {loading ? <p>Loading tasks...</p> : null}
           {error && <p style={{ color: 'red' }}>{error}</p>}
+          {message && <p style={{ color: message.includes('accepted') ? 'green' : 'red' }}>{message}</p>}
           <div id="taskList">
             {tasks.length === 0 && !loading ? <p>No tasks available.</p> : null}
             {tasks.map(task => (
@@ -40,6 +66,13 @@ const VolunteerDashboard: React.FC = () => {
                 <p><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
                 <p><b>Urgency:</b> {task.urgency}</p>
                 <p><b>Posted by:</b> {task.createdBy?.name || 'Unknown'}</p>
+                {!task.accepted ? (
+                  <button className="get-started" onClick={() => handleAccept(task._id)} disabled={accepting === task._id}>
+                    {accepting === task._id ? 'Accepting...' : 'Accept Task'}
+                  </button>
+                ) : (
+                  <span style={{ color: 'green' }}><b>Accepted</b></span>
+                )}
               </div>
             ))}
           </div>
