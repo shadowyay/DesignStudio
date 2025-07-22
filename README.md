@@ -1,69 +1,74 @@
-# React + TypeScript + Vite
+# Micro-Volunteer Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack application connecting users who need help with volunteers ready to offer their support. This platform facilitates the creation of tasks, allows volunteers to accept them, and manages the interaction between users and volunteers seamlessly.
 
-Currently, two official plugins are available:
+## Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*   **User Authentication:** Secure registration and login for both regular users and volunteers.
+*   **Task Creation:** Users can post tasks, specifying the description, location, number of volunteers needed, and urgency.
+*   **Volunteer Dashboard:** Volunteers can view a list of available tasks and accept the ones they are interested in.
+*   **User Dashboard:** Users can see the tasks they have created and track the number of volunteers who have accepted.
+*   **Real-time Updates:** The platform provides immediate feedback on actions like task creation and acceptance.
 
-## Expanding the ESLint configuration
+## Technologies Used
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+*   **Frontend:** React, Vite, TypeScript
+*   **Backend:** Node.js, Express, MongoDB, Mongoose
+*   **Routing:** React Router
+*   **Development:** Concurrently (for running both servers), Nodemon (for backend hot-reloading)
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+
+You need to have [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/) installed on your machine.
+
+### Installation
+
+1.  **Clone the repository:**
+    ```sh
+    git clone https://github.com/your-username/your-repository-name.git
+    cd your-repository-name
+    ```
+
+2.  **Install root dependencies:**
+    This will install the necessary packages for the frontend and the `concurrently` tool.
+    ```sh
+    npm install
+    ```
+
+3.  **Install server dependencies:**
+    Navigate to the server directory and install its specific dependencies.
+    ```sh
+    cd server
+    npm install
+    cd ..
+    ```
+
+### Environment Variables
+
+The backend server requires a `.env` file for configuration.
+
+1.  Create a file named `.env` in the `server/` directory.
+2.  Add the following environment variables to the file, replacing the placeholder with your MongoDB connection string:
+
+    ```env
+    MONGO_URI=mongodb+srv://<your-username>:<your-password>@<your-cluster-url>/<your-database-name>
+    PORT=5000
+    ```
+
+### Running the Application
+
+Once the installation is complete and the environment variables are set, you can start both the frontend and backend servers with a single command from the **root directory**:
+
+```sh
+npm start
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This will:
+*   Start the frontend Vite development server (usually on `http://localhost:5173`).
+*   Start the backend Node.js server (on `http://localhost:5000`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+You can now open your browser and navigate to the frontend URL to use the application.
