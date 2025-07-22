@@ -9,6 +9,9 @@ const Dashboard: React.FC = () => {
   const [description, setDescription] = useState('');
   const [peopleNeeded, setPeopleNeeded] = useState(1);
   const [urgency, setUrgency] = useState('Normal');
+  const [location, setLocation] = useState('');
+  const [approxStartTime, setApproxStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -32,13 +35,16 @@ const Dashboard: React.FC = () => {
         setLoading(false);
         return;
       }
-      const res = await createTask({ title, description, peopleNeeded, urgency, createdBy }, token);
+      const res = await createTask({ title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime: endTime || undefined }, token);
       if (res._id) {
         setSuccess('Task posted successfully!');
         setTitle('');
         setDescription('');
         setPeopleNeeded(1);
         setUrgency('Normal');
+        setLocation('');
+        setApproxStartTime('');
+        setEndTime('');
       } else {
         setError(res.message || 'Failed to post task');
       }
@@ -58,6 +64,12 @@ const Dashboard: React.FC = () => {
             <input type="text" name="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Food Distribution" required />
             <label>Description:</label>
             <textarea name="description" rows={4} value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the task..." required />
+            <label>Location:</label>
+            <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Community Center" required />
+            <label>Approximate Start Time (optional):</label>
+            <input type="datetime-local" name="approxStartTime" value={approxStartTime} onChange={e => setApproxStartTime(e.target.value)} />
+            <label>End Time (optional):</label>
+            <input type="datetime-local" name="endTime" value={endTime} onChange={e => setEndTime(e.target.value)} />
             <label>Number of Volunteers Needed:</label>
             <input type="number" name="peopleNeeded" min={1} value={peopleNeeded} onChange={e => setPeopleNeeded(Number(e.target.value))} required />
             <label>Urgency Level:</label>

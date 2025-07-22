@@ -34,6 +34,9 @@ const VolunteerDashboard: React.FC = () => {
               <div key={task._id} style={{ border: '1px solid #444', borderRadius: 6, padding: 12, marginBottom: 12 }}>
                 <h3>{task.title}</h3>
                 <p>{task.description}</p>
+                <p><b>Location:</b> {task.location}</p>
+                <p><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                {task.endTime && <p><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
                 <p><b>Urgency:</b> {task.urgency}</p>
                 <p><b>Posted by:</b> {task.createdBy?.name || 'Unknown'}</p>

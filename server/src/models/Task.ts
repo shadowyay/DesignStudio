@@ -6,6 +6,9 @@ export interface ITask extends Document {
   peopleNeeded: number;
   urgency: 'Normal' | 'Urgent' | 'Emergency';
   createdBy: mongoose.Types.ObjectId;
+  location: string;
+  approxStartTime?: Date;
+  endTime?: Date;
 }
 
 const TaskSchema: Schema = new Schema({
@@ -13,7 +16,10 @@ const TaskSchema: Schema = new Schema({
   description: { type: String, required: true },
   peopleNeeded: { type: Number, required: true },
   urgency: { type: String, enum: ['Normal', 'Urgent', 'Emergency'], required: true },
-  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  location: { type: String, required: true },
+  approxStartTime: { type: Date },
+  endTime: { type: Date }
 }, { timestamps: true });
 
 export default mongoose.model<ITask>('Task', TaskSchema);
