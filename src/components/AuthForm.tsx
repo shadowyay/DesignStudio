@@ -69,44 +69,62 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
   };
 
   return (
-    <main style={{ maxWidth: 400, margin: '40px auto', lineHeight: 1.8 }}>
+    <main className="max-w-md mx-auto my-16 p-8 bg-white rounded-2xl shadow-lg">
       {!showRegister ? (
-        <section className="section active">
-          <h2>Login</h2>
-          <form onSubmit={handleLogin}>
-            <label>Email:</label>
-            <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} required />
-            <label>Password:</label>
-            <input type="password" name="password" value={password} onChange={e => setPassword(e.target.value)} required />
-            <button type="submit" className="get-started" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
+        <section>
+          <h2 className="text-2xl font-bold text-blue-700 mb-6">Login</h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Email:</label>
+              <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Password:</label>
+              <input type="password" name="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
           </form>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <p>
-            Don't have an account? <a href="#" onClick={e => {e.preventDefault(); setShowRegister(true);}}>Create an account</a>
+          {error && <p className="text-red-500 mt-4">{error}</p>}
+          <p className="mt-4 text-gray-600">
+            Don't have an account?{' '}
+            <a href="#" className="text-blue-600 hover:underline" onClick={e => {e.preventDefault(); setShowRegister(true);}}>Create an account</a>
           </p>
         </section>
       ) : (
-        <section className="section">
-          <h2>Register</h2>
-          <form onSubmit={handleRegister}>
-            <label>Full Name:</label>
-            <input type="text" name="name" value={name} onChange={e => setName(e.target.value)} required />
-            <label>Date of Birth:</label>
-            <input type="date" name="dob" value={dob} onChange={e => setDob(e.target.value)} required />
-            <label>Email:</label>
-            <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} required />
-            <label>Phone Number:</label>
-            <input type="tel" name="phone" pattern="[0-9]{10}" title="Enter a 10-digit number" value={phone} onChange={e => setPhone(e.target.value)} required />
-            <label>Password:</label>
-            <input type="password" name="password" value={password} onChange={e => setPassword(e.target.value)} required />
-            <small>Password must be at least 8 characters with letters and numbers.</small>
-            <label>Location:</label>
-            <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} required />
-            <button type="submit" className="get-started" disabled={loading}>{loading ? 'Signing up...' : 'Sign Up'}</button>
+        <section>
+          <h2 className="text-2xl font-bold text-blue-700 mb-6">Register</h2>
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
+              <input type="text" name="name" value={name} onChange={e => setName(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Date of Birth:</label>
+              <input type="date" name="dob" value={dob} onChange={e => setDob(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Email:</label>
+              <input type="email" name="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Phone Number:</label>
+              <input type="tel" name="phone" pattern="[0-9]{10}" title="Enter a 10-digit number" value={phone} onChange={e => setPhone(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Password:</label>
+              <input type="password" name="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <small className="text-gray-500 block mt-1">Password must be at least 8 characters with letters and numbers.</small>
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Location:</label>
+              <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Signing up...' : 'Sign Up'}</button>
           </form>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <p>
-            Already have an account? <a href="#" onClick={e => {e.preventDefault(); setShowRegister(false);}}>Back to Login</a>
+          {error && <p className="text-red-500 mt-4">{error}</p>}
+          <p className="mt-4 text-gray-600">
+            Already have an account?{' '}
+            <a href="#" className="text-blue-600 hover:underline" onClick={e => {e.preventDefault(); setShowRegister(false);}}>Back to Login</a>
           </p>
         </section>
       )}
