@@ -20,8 +20,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
   const [dob, setDob] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
-  const [skills, setSkills] = useState('');
-  const [openToAnything, setOpenToAnything] = useState('Yes');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,10 +55,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
         location,
         role: isVolunteer ? 'volunteer' : 'user',
       };
-      if (isVolunteer) {
-        data.skills = skills;
-        data.openToAnything = openToAnything === 'Yes';
-      }
       const res = await register(data);
       if (res.message && res.message.includes('success')) {
         setShowRegister(false);
@@ -108,17 +102,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
             <small>Password must be at least 8 characters with letters and numbers.</small>
             <label>Location:</label>
             <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} required />
-            {isVolunteer && (
-              <>
-                <label>What can you volunteer for?</label>
-                <input type="text" name="skills" value={skills} onChange={e => setSkills(e.target.value)} placeholder="e.g. Teaching, Cleaning, Organizing" required />
-                <label>Or open to anything?</label>
-                <select name="openToAnything" value={openToAnything} onChange={e => setOpenToAnything(e.target.value)}>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
-              </>
-            )}
             <button type="submit" className="get-started" disabled={loading}>{loading ? 'Signing up...' : 'Sign Up'}</button>
           </form>
           {error && <p style={{ color: 'red' }}>{error}</p>}

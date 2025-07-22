@@ -4,10 +4,9 @@ export async function getUserTasks(userId: string) {
 }
 
 export async function acceptTask(taskId: string, volunteerId: string) {
-  const res = await fetch(`${API_URL}/tasks/${taskId}/accept`, {
+  const res = await fetch(`${API_URL}/tasks/${taskId}/accept/${volunteerId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ volunteerId })
   });
   return res.json();
 }
@@ -44,6 +43,20 @@ export async function createTask(data: any, token: string) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function getUserProfile(userId: string) {
+  const res = await fetch(`${API_URL}/user/${userId}`);
+  return res.json();
+}
+
+export async function updateUserProfile(userId: string, data: any) {
+  const res = await fetch(`${API_URL}/user/${userId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   });
   return res.json();

@@ -90,14 +90,12 @@ const Dashboard: React.FC = () => {
             <label>Urgency Level:</label>
             <select name="urgency" value={urgency} onChange={e => setUrgency(e.target.value)}>
               <option>Normal</option>
-              <option>Urgent</option>
               <option>Emergency</option>
             </select>
             <button type="submit" className="get-started" disabled={loading}>{loading ? 'Posting...' : 'Post Task'}</button>
           </form>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           {success && <p style={{ color: 'green' }}>{success}</p>}
-          <button className="get-started" style={{ marginBottom: 16 }} onClick={() => setShowProfile(false)}>Create New Task</button>
           <h3>Your Posted Tasks</h3>
           <div id="userTaskList">
             {userTasks.length === 0 ? <p>No tasks posted yet.</p> : null}
@@ -107,6 +105,10 @@ const Dashboard: React.FC = () => {
                 <p>{task.description}</p>
                 <p><b>Location:</b> {task.location}</p>
                 <p><b>Amount:</b> ₹{task.amount}</p>
+                <p><b>Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                <p><b>End Time:</b> {task.endTime ? new Date(task.endTime).toLocaleString() : 'N/A'}</p>
+                <p><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
+                <p><b>Urgency:</b> {task.urgency}</p>
                 <p><b>Status:</b> {task.accepted ? 'Accepted' : 'Pending'}</p>
                 {task.accepted && task.acceptedBy && task.acceptedBy.name && (
                   <p><b>Accepted By:</b> {task.acceptedBy.name} ({task.acceptedBy.email})</p>
@@ -131,7 +133,6 @@ const Dashboard: React.FC = () => {
             <input type="text" name="location" value="City, Country" />
             <button type="submit" className="get-started">Update Profile</button>
           </form>
-          <button className="get-started" onClick={() => setShowProfile(false)}>Back to Dashboard</button>
         </section>
       )}
       <button className="get-started" onClick={() => setShowProfile(!showProfile)}>

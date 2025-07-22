@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { getTasks, acceptTask } from '../api';
+import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
 
 const VolunteerDashboard: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
@@ -9,6 +9,11 @@ const VolunteerDashboard: React.FC = () => {
   const [error, setError] = useState('');
   const [accepting, setAccepting] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [profile, setProfile] = useState<any>({});
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
+  const userId = localStorage.getItem('userId');
 
   useEffect(() => {
     if (!showProfile) {
@@ -20,30 +25,63 @@ const VolunteerDashboard: React.FC = () => {
         })
         .catch(() => setError('Failed to load tasks'))
         .finally(() => setLoading(false));
+    } else if (userId) {
+      setProfileLoading(true);
+      getUserProfile(userId)
+        .then(data => {
+          setProfile(data);
+          setProfileError('');
+        })
+        .catch(() => setProfileError('Failed to load profile'))
+        .finally(() => setProfileLoading(false));
     }
-  }, [showProfile]);
+  }, [showProfile, userId]);
 
   const handleAccept = async (taskId: string) => {
-    const volunteerId = localStorage.getItem('userId');
-    if (!volunteerId) {
+    if (!userId) {
       setMessage('You must be logged in as a volunteer to accept tasks.');
       return;
     }
     setAccepting(taskId);
     setMessage('');
     try {
-      const result = await acceptTask(taskId, volunteerId);
-      if (result.success !== false && !result.error) {
+      const result = await acceptTask(taskId, userId);
+      if (result.success) {
         setMessage('Task accepted!');
+        // Find the task in the current state and update it with the new data from the server.
+        setTasks(prevTasks => {
+          const newTasks = [...prevTasks];
+          const taskIndex = newTasks.findIndex(t => t._id === taskId);
+          if (taskIndex !== -1) {
+            newTasks[taskIndex] = result.task;
+          }
+          return newTasks;
+        });
       } else {
         setMessage(result.message || 'Could not accept task.');
       }
-      // Refresh tasks after accepting
-      getTasks().then(res => setTasks(Array.isArray(res) ? res : []));
     } catch (err) {
       setMessage('Error accepting task.');
     }
     setAccepting(null);
+  };
+
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfile({ ...profile, [e.target.name]: e.target.value });
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+    setProfileLoading(true);
+    try {
+      await updateUserProfile(userId, profile);
+      setMessage('Profile updated successfully!');
+    } catch (err) {
+      setProfileError('Failed to update profile.');
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
   return (
@@ -64,14 +102,23 @@ const VolunteerDashboard: React.FC = () => {
                 <p><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
                 {task.endTime && <p><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
-                <p><b>Urgency:</b> {task.urgency}</p>
-                <p><b>Posted by:</b> {task.createdBy?.name || 'Unknown'}</p>
-                {!task.accepted ? (
+                <p><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
+                {task.acceptedBy && task.acceptedBy.length > 0 && (
+                  <div style={{ marginBottom: 6 }}>
+                    <b>Accepted Volunteers List:</b>
+                    <ul style={{ margin: 0, paddingLeft: 18 }}>
+                      {task.acceptedBy.map((vol: any) => (
+                        <li key={vol._id}>{vol.name} ({vol.email})</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {!task.isFull ? (
                   <button className="get-started" onClick={() => handleAccept(task._id)} disabled={accepting === task._id}>
                     {accepting === task._id ? 'Accepting...' : 'Accept Task'}
                   </button>
                 ) : (
-                  <span style={{ color: 'green' }}><b>Accepted</b></span>
+                  <span style={{ color: 'green' }}><b>All volunteers accepted</b></span>
                 )}
               </div>
             ))}
@@ -80,22 +127,23 @@ const VolunteerDashboard: React.FC = () => {
       ) : (
         <section className="section">
           <h2>Your Profile</h2>
-          <form>
-            <label>Profile Picture:</label>
-            <input type="file" name="profilePic" accept="image/*" />
+          {profileLoading && <p>Loading profile...</p>}
+          {profileError && <p style={{ color: 'red' }}>{profileError}</p>}
+          <form onSubmit={handleProfileSubmit}>
             <label>Full Name:</label>
-            <input type="text" name="name" value="Jane Volunteer" />
+            <input type="text" name="name" value={profile.name || ''} onChange={handleProfileChange} />
             <label>Email:</label>
-            <input type="email" name="email" value="volunteer@example.com" />
+            <input type="email" name="email" value={profile.email || ''} onChange={handleProfileChange} />
             <label>Phone:</label>
-            <input type="tel" name="phone" value="9876543210" />
+            <input type="tel" name="phone" value={profile.phone || ''} onChange={handleProfileChange} />
             <label>Location:</label>
-            <input type="text" name="location" value="City, Country" />
+            <input type="text" name="location" value={profile.location || ''} onChange={handleProfileChange} />
             <label>Skills / Interests:</label>
-            <input type="text" name="skills" value="Teaching, Organizing" />
-            <button type="submit" className="get-started">Update Profile</button>
+            <input type="text" name="skills" value={profile.skills || ''} onChange={handleProfileChange} />
+            <button type="submit" className="get-started" disabled={profileLoading}>
+              {profileLoading ? 'Updating...' : 'Update Profile'}
+            </button>
           </form>
-          <button className="get-started" onClick={() => setShowProfile(false)}>Back to Dashboard</button>
         </section>
       )}
       <button className="get-started" onClick={() => setShowProfile(!showProfile)}>

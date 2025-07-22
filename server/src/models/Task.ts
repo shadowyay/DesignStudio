@@ -4,14 +4,15 @@ export interface ITask extends Document {
   title: string;
   description: string;
   peopleNeeded: number;
-  urgency: 'Normal' | 'Urgent' | 'Emergency';
+  urgency: 'Normal' | 'Emergency';
   createdBy: mongoose.Types.ObjectId;
   location: string;
   approxStartTime?: Date;
   endTime?: Date;
   amount: number;
-  accepted: boolean;
-  acceptedBy?: mongoose.Types.ObjectId;
+  acceptedBy: mongoose.Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const TaskSchema: Schema = new Schema({
@@ -24,8 +25,7 @@ const TaskSchema: Schema = new Schema({
   approxStartTime: { type: Date },
   endTime: { type: Date },
   amount: { type: Number, required: true },
-  accepted: { type: Boolean, default: false },
-  acceptedBy: { type: Schema.Types.ObjectId, ref: 'User' }
+  acceptedBy: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] }
 }, { timestamps: true });
 
 export default mongoose.model<ITask>('Task', TaskSchema);
