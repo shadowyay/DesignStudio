@@ -20,7 +20,13 @@ const VolunteerDashboard: React.FC = () => {
       setLoading(true);
       getTasks()
         .then(res => {
-          setTasks(Array.isArray(res) ? res : []);
+          const filteredTasks = Array.isArray(res) ? res.filter((task: any) => {
+            const isAcceptedByAnyone = task.acceptedBy && task.acceptedBy.length > 0;
+            const currentUserAccepted = isAcceptedByAnyone && userId && task.acceptedBy.some((vol: any) => vol._id === userId);
+            // Show task if no one has accepted it OR if the current user has accepted it
+            return !isAcceptedByAnyone || currentUserAccepted;
+          }) : [];
+          setTasks(filteredTasks);
           setError('');
         })
         .catch(() => setError('Failed to load tasks'))
@@ -103,23 +109,37 @@ const VolunteerDashboard: React.FC = () => {
                 {task.endTime && <p><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
                 <p><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
-                {task.acceptedBy && task.acceptedBy.length > 0 && (
-                  <div style={{ marginBottom: 6 }}>
-                    <b>Accepted Volunteers List:</b>
-                    <ul style={{ margin: 0, paddingLeft: 18 }}>
-                      {task.acceptedBy.map((vol: any) => (
-                        <li key={vol._id}>{vol.name} ({vol.email})</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {!task.isFull ? (
-                  <button className="get-started" onClick={() => handleAccept(task._id)} disabled={accepting === task._id}>
-                    {accepting === task._id ? 'Accepting...' : 'Accept Task'}
-                  </button>
-                ) : (
-                  <span style={{ color: 'green' }}><b>All volunteers accepted</b></span>
-                )}
+                {/* Determine if the current user has accepted this task */}
+                {(() => {
+                  const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: any) => vol._id === userId);
+
+                  if (currentUserAccepted) {
+                    return (
+                      <>
+                        <p style={{ color: 'green', fontWeight: 'bold' }}>You have accepted this task!</p>
+                        {/* Display the full list of accepted volunteers only if the current user has accepted it */}
+                        {task.acceptedBy && task.acceptedBy.length > 0 && (
+                          <div style={{ marginBottom: 6 }}>
+                            <b>Accepted Volunteers List:</b>
+                            <ul style={{ margin: 0, paddingLeft: 18 }}>
+                              {task.acceptedBy.map((vol: any) => (
+                                <li key={vol._id}>{vol.name} ({vol.email})</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </>
+                    );
+                  } else if (task.isFull) {
+                    return <span style={{ color: 'green' }}><b>All volunteers accepted</b></span>;
+                  } else {
+                    return (
+                      <button className="get-started" onClick={() => handleAccept(task._id)} disabled={accepting === task._id}>
+                        {accepting === task._id ? 'Accepting...' : 'Accept Task'}
+                      </button>
+                    );
+                  }
+                })()}
               </div>
             ))}
           </div>

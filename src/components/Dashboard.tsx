@@ -49,6 +49,10 @@ const Dashboard: React.FC = () => {
       const res = await createTask({ title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime: endTime || undefined, amount: Number(amount) }, token);
       if (res._id) {
         setSuccess('Task posted successfully!');
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          getUserTasks(userId).then((res: any) => setUserTasks(Array.isArray(res) ? res : []));
+        }
         setTitle('');
         setDescription('');
         setPeopleNeeded(1);
@@ -72,9 +76,6 @@ const Dashboard: React.FC = () => {
         <section className="section active">
           <h2>Create New Task / Emergency</h2>
           <form onSubmit={handleTaskSubmit}>
-            <label>Amount to Pay:</label>
-            <input type="number" name="amount" min={0} value={amount} onChange={e => setAmount(e.target.value)} required />
-            <small style={{ color: 'orange' }}>You will pay this amount. Extra taxes may apply.</small>
             <label>Task Title:</label>
             <input type="text" name="title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Food Distribution" required />
             <label>Description:</label>
@@ -92,7 +93,10 @@ const Dashboard: React.FC = () => {
               <option>Normal</option>
               <option>Emergency</option>
             </select>
-            <button type="submit" className="get-started" disabled={loading}>{loading ? 'Posting...' : 'Post Task'}</button>
+            <label>Amount to Pay:</label>
+            <input type="number" name="amount" min={0} value={amount} onChange={e => setAmount(e.target.value)} required />
+            <small style={{ color: 'orange' }}>You will pay this amount. Extra taxes may apply.</small>
+            <button type="submit" className="get-started" disabled={loading} style={{ display: 'block', marginTop: '10px', margin: '10px auto' }}>{loading ? 'Posting...' : 'Post Task'}</button>
           </form>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           {success && <p style={{ color: 'green' }}>{success}</p>}
