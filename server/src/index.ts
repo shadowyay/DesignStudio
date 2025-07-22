@@ -9,7 +9,9 @@ import userRoutes from './routes/user';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173' // Allow requests from your Vercel frontend
+}));
 app.use(express.json());
 
 
