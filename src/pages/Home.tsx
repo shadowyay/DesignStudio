@@ -10,10 +10,10 @@ const Home: React.FC = () => {
       <header>
         <h1>Micro Volunteer Platform</h1>
         <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-          <Link to="/contact">Contact</Link>
-          <Link to="/support">Support</Link>
+            <a href="#home">Home</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+            <a href="#support">Support</a>
         </nav>
       </header>
       <main>
@@ -21,6 +21,21 @@ const Home: React.FC = () => {
           <h2>Welcome to the Micro Volunteer Platform</h2>
           <p>Connecting volunteers and those in need with ease and efficiency.</p>
           <button className="get-started" onClick={() => setModalOpen(true)}>Get Started</button>
+        </section>
+        <section id="about" className="section active">
+          <h2>About</h2>
+          <h2>Welcome to the Micro Volunteer Platform</h2>
+          <p>Connecting volunteers and those in need with ease and efficiency.</p>
+        </section>
+        <section id="contact" className="section active">
+          <h2>Contact</h2>
+          <h2>Welcome to the Micro Volunteer Platform</h2>
+          <p>Connecting volunteers and those in need with ease and efficiency.</p>
+        </section>
+        <section id="support" className="section active">
+          <h2>Support</h2>
+          <h2>Welcome to the Micro Volunteer Platform</h2>
+          <p>Connecting volunteers and those in need with ease and efficiency.</p>
         </section>
       </main>
       <RoleModal open={modalOpen} onClose={() => setModalOpen(false)} />
