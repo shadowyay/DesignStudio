@@ -17,8 +17,13 @@ app.use(express.json());
 
 
 
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || '';
+const PORT = process.env.PORT;
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  throw new Error('MONGO_URI environment variable is not set. Please check your .env file.');
+}
+
 console.log('MongoDB URI:', MONGO_URI);
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB connected'))
