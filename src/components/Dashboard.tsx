@@ -1,6 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createTask, getUserTasks, getUserProfile, deleteTask } from '../api';
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import type { Library } from '@react-google-maps/api';
+
+const GOOGLE_MAPS_LIBRARIES = ['places'] as unknown as string[];
 
 const Dashboard: React.FC = () => {
   // User's posted tasks state
@@ -37,7 +41,44 @@ const Dashboard: React.FC = () => {
   const [description, setDescription] = useState('');
   const [peopleNeeded, setPeopleNeeded] = useState(1);
   const [urgency, setUrgency] = useState('Normal');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: GOOGLE_MAPS_LIBRARIES
+  });
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setMapCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
+          setLocation({ address: '', lat: position.coords.latitude, lng: position.coords.longitude });
+        },
+        () => {
+          setMapCenter({ lat: 20.5937, lng: 78.9629 }); // Default to India
+        }
+      );
+    } else {
+      setMapCenter({ lat: 20.5937, lng: 78.9629 });
+    }
+  }, []);
+
+  const handleMapClick = async (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      // Get address using Geocoder
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          setLocation({ address: results[0].formatted_address, lat, lng });
+        } else {
+          setLocation({ address: '', lat, lng });
+        }
+      });
+    }
+  };
   const [approxStartTime, setApproxStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [loading, setLoading] = useState(false);
@@ -80,7 +121,7 @@ const Dashboard: React.FC = () => {
         setDescription('');
         setPeopleNeeded(1);
         setUrgency('Normal');
-        setLocation('');
+        setLocation(null);
         setApproxStartTime('');
         setEndTime('');
         setAmount(0);
@@ -120,7 +161,21 @@ const Dashboard: React.FC = () => {
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
-              <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Community Center" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              {isLoaded && mapCenter && (
+                <div style={{ height: '300px', width: '100%' }}>
+                  <GoogleMap
+                    center={location ? { lat: location.lat, lng: location.lng } : mapCenter}
+                    zoom={15}
+                    mapContainerStyle={{ height: '100%', width: '100%' }}
+                    onClick={handleMapClick}
+                  >
+                    {location && <Marker position={{ lat: location.lat, lng: location.lng }} draggable={true} onDragEnd={handleMapClick} />}
+                  </GoogleMap>
+                  <div className="mt-2 text-sm text-gray-600">
+                    {location?.address ? `Selected: ${location.address}` : 'Click on the map to select a location.'}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

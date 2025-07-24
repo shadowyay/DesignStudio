@@ -15,6 +15,8 @@ router.post('/', async (req, res) => {
     await task.save();
     res.status(201).json(task);
   } catch (err) {
+    console.error('Error creating task:', err);
+    console.error('Request body:', req.body);
     res.status(500).json({ message: 'Server error', error: err });
   }
 });

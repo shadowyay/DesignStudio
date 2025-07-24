@@ -104,7 +104,17 @@ const VolunteerDashboard: React.FC = () => {
               <div key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
                 <h3 className="text-lg font-bold text-blue-700 mb-1">{task.title}</h3>
                 <p className="text-gray-700 mb-1">{task.description}</p>
-                <p className="text-sm text-gray-500"><b>Location:</b> {task.location}</p>
+                <p className="text-sm text-gray-500"><b>Location:</b> {task.location?.address || ''}</p>
+                {task.location && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${task.location.lat},${task.location.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                  >
+                    View on Google Maps
+                  </a>
+                )}
                 <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
                 {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>

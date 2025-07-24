@@ -43,7 +43,10 @@ export async function createTask(data: any, token: string) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify({
+      ...data,
+      location: data.location // should be { address, lat, lng }
+    })
   });
   return res.json();
 }

@@ -6,7 +6,11 @@ export interface ITask extends Document {
   peopleNeeded: number;
   urgency: 'Normal' | 'Emergency';
   createdBy: mongoose.Types.ObjectId;
-  location: string;
+  location: {
+    address: string;
+    lat: number;
+    lng: number;
+  };
   approxStartTime?: Date;
   endTime?: Date;
   amount: number;
@@ -21,7 +25,11 @@ const TaskSchema: Schema = new Schema({
   peopleNeeded: { type: Number, required: true },
   urgency: { type: String, enum: ['Normal', 'Urgent', 'Emergency'], required: true },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  location: { type: String, required: true },
+  location: {
+    address: { type: String, required: true },
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true }
+  },
   approxStartTime: { type: Date },
   endTime: { type: Date },
   amount: { type: Number, required: true },
