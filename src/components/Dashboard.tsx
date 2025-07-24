@@ -1,8 +1,6 @@
 
 import React, { useState } from 'react';
-import { createTask } from '../api';
-import { getUserTasks } from '../api';
-import { getUserProfile } from '../api'; // Added import for getUserProfile
+import { createTask, getUserTasks, getUserProfile, deleteTask } from '../api';
 
 const Dashboard: React.FC = () => {
   // User's posted tasks state
@@ -95,6 +93,17 @@ const Dashboard: React.FC = () => {
     setLoading(false);
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      await deleteTask(taskId, token);
+      setUserTasks(userTasks.filter(task => task._id !== taskId));
+    } catch (err) {
+      setError('Failed to delete task');
+    }
+  };
+
   return (
     <main className="max-w-4xl mx-auto my-10 px-4">
       {!showProfile ? (
@@ -162,6 +171,15 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-500"><b>Status:</b> {task.acceptedBy && task.acceptedBy.length > 0 ? 'Accepted' : 'Pending'}</p>
                 {task.acceptedBy && task.acceptedBy.length > 0 && task.acceptedBy[0].name && (
                   <p className="text-sm text-green-600"><b>Accepted By:</b> {task.acceptedBy[0].name} ({task.acceptedBy[0].email})</p>
+                )}
+                {/* Delete button only if not accepted by any volunteers */}
+                {(!task.acceptedBy || task.acceptedBy.length === 0) && (
+                  <button
+                    className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
+                    onClick={() => handleDeleteTask(task._id)}
+                  >
+                    Delete Task
+                  </button>
                 )}
               </div>
             ))}

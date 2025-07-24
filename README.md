@@ -56,7 +56,7 @@ The backend server requires a `.env` file for configuration.
 
     ```env
     MONGO_URI=mongodb+srv://<your-username>:<your-password>@<your-cluster-url>/<your-database-name>
-    PORT=5000
+    PORT=3000
     ```
 
 ### Running the Application
@@ -69,6 +69,6 @@ npm start
 
 This will:
 *   Start the frontend Vite development server (usually on `http://localhost:5173`).
-*   Start the backend Node.js server (on `http://localhost:5000`).
+*   Start the backend Node.js server (on `http://localhost:3000`).
 
 You can now open your browser and navigate to the frontend URL to use the application.

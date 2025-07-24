@@ -11,7 +11,7 @@ export async function acceptTask(taskId: string, volunteerId: string) {
   return res.json();
 }
 // API utility for frontend to connect to backend
-export const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:5000/api';
+export const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api`;
 
 export async function login(email: string, password: string) {
   const res = await fetch(`${API_URL}/auth/login`, {
@@ -58,6 +58,16 @@ export async function updateUserProfile(userId: string, data: any) {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+export async function deleteTask(taskId: string, token: string) {
+  const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
   });
   return res.json();
 }

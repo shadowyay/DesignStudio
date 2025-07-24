@@ -72,6 +72,33 @@ router.post('/:id/accept/:volunteerId', async (req, res) => {
   }
 });
 
+// Delete Task (only if not accepted by any volunteers)
+router.delete('/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    // Get userId from headers (sent from frontend)
+    const userId = req.headers['userid'];
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      return res.status(400).json({ success: false, message: 'Invalid task ID' });
+    }
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+    if (task.acceptedBy && task.acceptedBy.length > 0) {
+      return res.status(400).json({ success: false, message: 'Cannot delete a task that has been accepted by volunteers.' });
+    }
+    // Optionally, check if the user is the creator
+    if (userId && task.createdBy.toString() !== userId) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to delete this task.' });
+    }
+    await Task.findByIdAndDelete(taskId);
+    res.json({ success: true, message: 'Task deleted successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Get All Tasks
 router.get('/', async (req, res) => {
   try {
