@@ -110,12 +110,12 @@ const VolunteerDashboard: React.FC = () => {
                 <p className="text-sm text-gray-500"><b>Location:</b> {task.location?.address || ''}</p>
                 {task.location && (
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${task.location.lat},${task.location.lng}`}
+                    href={`https://www.openstreetmap.org/#map=18/${task.location.lat}/${task.location.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
                   >
-                    View on Google Maps
+                    View on OpenStreetMap
                   </a>
                 )}
                 <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
