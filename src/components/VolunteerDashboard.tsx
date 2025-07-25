@@ -12,6 +12,7 @@ const VolunteerDashboard: React.FC = () => {
   const [profile, setProfile] = useState<any>({});
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [profileMessage, setProfileMessage] = useState('');
 
   const userId = localStorage.getItem('userId');
 
@@ -80,9 +81,11 @@ const VolunteerDashboard: React.FC = () => {
     e.preventDefault();
     if (!userId) return;
     setProfileLoading(true);
+    setProfileMessage('');
+    setProfileError('');
     try {
       await updateUserProfile(userId, profile);
-      setMessage('Profile updated successfully!');
+      setProfileMessage('Profile updated successfully!');
     } catch (err) {
       setProfileError('Failed to update profile.');
     } finally {
@@ -159,6 +162,7 @@ const VolunteerDashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-blue-700 mb-6">Your Profile</h2>
           {profileLoading && <p className="text-gray-500">Loading profile...</p>}
           {profileError && <p className="text-red-500 mt-2">{profileError}</p>}
+          {profileMessage && <p className="text-green-600 mt-2">{profileMessage}</p>}
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <div>
               <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
