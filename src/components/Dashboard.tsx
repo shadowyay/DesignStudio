@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createTask, getTasks, deleteTask } from '../api';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,6 +22,7 @@ const Dashboard: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]); // Default to India
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const fetchTasks = () => {
     setLoading(true);
@@ -44,6 +45,12 @@ const Dashboard: React.FC = () => {
       );
     }
   }, []);
+
+  useEffect(() => {
+    if (showForm && editingTask && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [showForm, editingTask]);
 
   const LocationMarker = () => {
     useMapEvents({
@@ -164,7 +171,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {showForm && (
-        <div className="bg-white p-8 rounded-2xl shadow-lg mb-8">
+        <div ref={formRef} className="bg-white p-8 rounded-2xl shadow-lg mb-8">
           <h2 className="text-2xl font-bold text-blue-700 mb-6">{editingTask ? 'Edit Task' : 'Create New Task'}</h2>
           <form onSubmit={editingTask ? handleUpdateTask : handleCreateTask} className="space-y-4">
             <div>
@@ -289,10 +296,12 @@ const Dashboard: React.FC = () => {
                     </ul>
                   </div>
                 )}
+                {(!task.acceptedCount || task.acceptedCount === 0) && (
                 <div className="flex space-x-2 mt-4">
                   <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
                   <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
                 </div>
+                )}
               </li>
             ))}
           </ul>
