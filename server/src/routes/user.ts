@@ -1,15 +1,12 @@
 import express from 'express';
-import User from '../models/User';
+import { getUserById, updateUserProfile } from '../controllers/userController';
 
 const router = express.Router();
 
 // Get user profile
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const user = await getUserById(req.params.id);
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -19,16 +16,7 @@ router.get('/:id', async (req, res) => {
 // Update user profile
 router.put('/:id', async (req, res) => {
   try {
-    const { name, email, phone, location, skills } = req.body;
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { name, email, phone, location, skills },
-      { new: true }
-    ).select('-password');
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const updatedUser = await updateUserProfile(req.params.id, req.body);
     res.json(updatedUser);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });

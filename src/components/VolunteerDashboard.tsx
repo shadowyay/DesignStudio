@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
+import AddressDisplay from './AddressDisplay';
 
 const VolunteerDashboard: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
@@ -96,7 +97,7 @@ const VolunteerDashboard: React.FC = () => {
   return (
     <main className="max-w-4xl mx-auto my-10 p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Volunteer Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName') || 'Volunteer'}</h1>
       </div>
       {!showProfile ? (
         <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
@@ -111,17 +112,11 @@ const VolunteerDashboard: React.FC = () => {
               <div key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
                 <h3 className="text-lg font-bold text-blue-700 mb-1">{task.title}</h3>
                 <p className="text-gray-700 mb-1">{task.description}</p>
-                <p className="text-sm text-gray-500"><b>Location:</b> {task.location?.address || ''}</p>
-                {task.location && (
-                  <a
-                    href={`https://www.openstreetmap.org/#map=18/${task.location.lat}/${task.location.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
-                  >
-                    View on OpenStreetMap
-                  </a>
-                )}
+                <AddressDisplay
+                  address={task.location?.address}
+                  lat={task.location?.lat}
+                  lng={task.location?.lng}
+                />
                 <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
                 {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>

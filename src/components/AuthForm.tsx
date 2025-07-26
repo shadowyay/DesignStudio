@@ -28,9 +28,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     try {
       const res = await login(email, password);
       if (res.token && res.user && res.user._id) {
-        // Save token and user ID, redirect to dashboard
+        // Save token, user ID, and user name, redirect to dashboard
         localStorage.setItem('token', res.token);
         localStorage.setItem('userId', res.user._id);
+        localStorage.setItem('userName', res.user.name);
         navigate(isVolunteer ? '/volunteer/dashboard' : '/user/dashboard');
       } else {
         setError(res.message || 'Login failed');
@@ -72,7 +73,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     <main className="max-w-md mx-auto my-16 p-8 bg-white rounded-2xl shadow-lg">
       {!showRegister ? (
         <section>
-          <h2 className="text-2xl font-bold text-blue-700 mb-6">Login</h2>
+          <h2 className="text-3xl font-bold text-black-700 mb-6 text-center">SmartServe</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block font-medium text-gray-700 mb-1">Email:</label>
@@ -92,7 +93,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
         </section>
       ) : (
         <section>
-          <h2 className="text-2xl font-bold text-blue-700 mb-6">Register</h2>
+          <h2 className="text-3xl font-bold text-black-700 mb-6 text-center">SmartServe</h2>
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
               <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
@@ -119,7 +120,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
               <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
-            <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Signing up...' : 'Sign Up'}</button>
+            <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
           </form>
           {error && <p className="text-red-500 mt-4">{error}</p>}
           <p className="mt-4 text-gray-600">

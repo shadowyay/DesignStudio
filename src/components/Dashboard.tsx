@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createTask, getTasks, deleteTask } from '../api';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import LocationMap from './LocationMap';
+import LocationPicker from './LocationPicker';
+import AddressDisplay from './AddressDisplay';
+import { getCurrentLocation } from '../utils/locationUtils';
 
 const Dashboard: React.FC = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -34,43 +36,7 @@ const Dashboard: React.FC = () => {
       .finally(() => setLoading(false));
   };
 
-  // Function to get user's current location
-  const getCurrentLocation = (): Promise<{ lat: number; lng: number; address?: string }> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by this browser.'));
-        return;
-      }
 
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          
-          try {
-            // Reverse geocoding to get address
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
-            );
-            const data = await response.json();
-            const address = data.display_name || `${latitude}, ${longitude}`;
-            
-            resolve({ lat: latitude, lng: longitude, address });
-          } catch (error) {
-            // If reverse geocoding fails, just return coordinates
-            resolve({ lat: latitude, lng: longitude, address: `${latitude}, ${longitude}` });
-          }
-        },
-        (error) => {
-          reject(new Error('Unable to retrieve your location.'));
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // 5 minutes
-        }
-      );
-    });
-  };
 
   useEffect(() => {
     fetchTasks();
@@ -92,23 +58,15 @@ const Dashboard: React.FC = () => {
     }
   }, [showForm, editingTask]);
 
-  const LocationMarker = () => {
-    useMapEvents({
-      click(e) {
-        const newLatLng: [number, number] = [e.latlng.lat, e.latlng.lng];
-        setMarkerPosition(newLatLng);
-        const locationDetails = { ...newTask.location, lat: e.latlng.lat, lng: e.latlng.lng };
-        if (editingTask) {
-          setEditingTask({ ...editingTask, location: locationDetails });
-        } else {
-          setNewTask({ ...newTask, location: locationDetails });
-        }
-      },
-    });
-
-    return markerPosition === null ? null : (
-      <Marker position={markerPosition}></Marker>
-    );
+  const handleLocationSelect = (lat: number, lng: number) => {
+    const newLatLng: [number, number] = [lat, lng];
+    setMarkerPosition(newLatLng);
+    const locationDetails = { ...newTask.location, lat, lng };
+    if (editingTask) {
+      setEditingTask({ ...editingTask, location: locationDetails });
+    } else {
+      setNewTask({ ...newTask, location: locationDetails });
+    }
   };
 
   // Function to handle opening the create task form with current location
@@ -237,7 +195,7 @@ const Dashboard: React.FC = () => {
   return (
     <main className="max-w-4xl mx-auto my-10 p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName')}</h1>
         <button
           className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
           disabled={locationLoading}
@@ -270,64 +228,39 @@ const Dashboard: React.FC = () => {
               <label className="block font-medium text-gray-700 mb-1">Description:</label>
               <textarea value={editingTask ? editingTask.description : newTask.description} onChange={e => editingTask ? setEditingTask({ ...editingTask, description: e.target.value }) : setNewTask({ ...newTask, description: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" rows={3}></textarea>
             </div>
-            <div>
-              <label className="block font-medium text-gray-700 mb-1">Location Address:</label>
-              <div className="flex gap-2">
-                <input type="text" placeholder="e.g., 123 Main St, Anytown, USA" value={editingTask ? editingTask.location?.address : newTask.location?.address} onChange={e => {
-                  const newLocation = { ... (editingTask ? editingTask.location : newTask.location), address: e.target.value };
-                  if (editingTask) {
-                    setEditingTask({ ...editingTask, location: newLocation });
-                  } else {
-                    setNewTask({ ...newTask, location: newLocation });
-                  }
-                }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setLocationLoading(true);
-                    setError(''); // Clear any previous errors
-                    setSuccessMessage(''); // Clear any previous success messages
-                    try {
-                      const currentLocation = await getCurrentLocation();
-                      const newLocation = {
-                        address: currentLocation.address || '',
-                        lat: currentLocation.lat,
-                        lng: currentLocation.lng
-                      };
-                      
-                      if (editingTask) {
-                        setEditingTask({ ...editingTask, location: newLocation });
-                      } else {
-                        setNewTask({ ...newTask, location: newLocation });
-                      }
-                      
-                      setMapCenter([currentLocation.lat, currentLocation.lng]);
-                      setMarkerPosition([currentLocation.lat, currentLocation.lng]);
-                      setSuccessMessage('Location updated successfully!');
-                      setTimeout(() => setSuccessMessage(''), 3000);
-                    } catch (error) {
-                      console.error('Error getting location:', error);
-                      setError('Failed to get current location. Please try again.');
-                    } finally {
-                      setLocationLoading(false);
-                    }
-                  }}
-                  disabled={locationLoading}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  {locationLoading ? '📍 Getting Location...' : '📍 Use My Location'}
-                </button>
-              </div>
-            </div>
-            <div style={{ height: '400px', width: '100%' }}>
-            <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-              <LocationMarker />
-            </MapContainer>
-            </div>
+            <LocationPicker
+              address={editingTask ? editingTask.location?.address || '' : newTask.location?.address || ''}
+              onAddressChange={(address) => {
+                const newLocation = { ...(editingTask ? editingTask.location : newTask.location), address };
+                if (editingTask) {
+                  setEditingTask({ ...editingTask, location: newLocation });
+                } else {
+                  setNewTask({ ...newTask, location: newLocation });
+                }
+              }}
+              onLocationChange={(lat, lng) => {
+                const newLocation = { ...(editingTask ? editingTask.location : newTask.location), lat, lng };
+                if (editingTask) {
+                  setEditingTask({ ...editingTask, location: newLocation });
+                } else {
+                  setNewTask({ ...newTask, location: newLocation });
+                }
+                setMapCenter([lat, lng]);
+                setMarkerPosition([lat, lng]);
+              }}
+              onCurrentLocationClick={() => {
+                setSuccessMessage('Location updated successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
+              }}
+              loading={locationLoading}
+            />
+            
+            <LocationMap
+              center={mapCenter}
+              markerPosition={markerPosition}
+              onLocationSelect={handleLocationSelect}
+              height="400px"
+            />
             <p className="text-sm text-gray-600 mt-2">Click on the map to set the task location.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -402,24 +335,18 @@ const Dashboard: React.FC = () => {
       {successMessage && <p className="text-green-600 my-4 font-semibold">{successMessage}</p>}
 
       <div className="bg-white p-8 rounded-2xl shadow-lg">
-        <h2 className="text-2xl font-bold text-blue-700 mb-6">Current Tasks</h2>
+        <h2 className="text-2xl font-bold text-blue-700 mb-6">Tasks Posted by You</h2>
         {loading ? <p>Loading tasks...</p> : (
           <ul className="space-y-4">
             {tasks.map(task => (
               <li key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
                 <h3 className="text-lg font-bold text-blue-700">{task.title}</h3>
                 <p className="text-gray-700 my-1">{task.description}</p>
-                {task.location?.address && <p className="text-sm text-gray-500"><b>Location:</b> {task.location.address}</p>}
-                {task.location?.lat && task.location?.lng && (
-                  <a
-                    href={`https://www.openstreetmap.org/#map=18/${task.location.lat}/${task.location.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
-                  >
-                    View on OpenStreetMap
-                  </a>
-                )}
+                <AddressDisplay
+                  address={task.location?.address}
+                  lat={task.location?.lat}
+                  lng={task.location?.lng}
+                />
                 <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
                 {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>

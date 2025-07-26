@@ -14,6 +14,19 @@ const Home: React.FC = () => {
     };
   }, []);
 
+  const handleFAQToggle = (show: boolean) => {
+    setShowFAQ(show);
+    if (show) {
+      // Scroll to FAQ section after a short delay to allow it to render
+      setTimeout(() => {
+        const faqSection = document.getElementById('faq');
+        if (faqSection) {
+          faqSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
   return (
     <>
       <header className="bg-white shadow-md sticky top-0 z-10">
@@ -25,7 +38,7 @@ const Home: React.FC = () => {
             <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium transition">Contact</a>
             <a href="#support" className="text-gray-700 hover:text-blue-600 font-medium transition">Support</a>
             <button 
-              onClick={() => setShowFAQ(!showFAQ)} 
+              onClick={() => handleFAQToggle(!showFAQ)} 
               className="text-gray-700 hover:text-blue-600 font-medium transition"
             >
               FAQ
@@ -203,7 +216,7 @@ const Home: React.FC = () => {
               <p className="text-gray-700 mb-4">Check our FAQ section below for quick answers, or contact our support team for personalized assistance.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button 
-                  onClick={() => setShowFAQ(true)}
+                  onClick={() => handleFAQToggle(true)}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
                 >
                   View FAQ
@@ -221,7 +234,7 @@ const Home: React.FC = () => {
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-bold text-blue-700">Frequently Asked Questions</h2>
               <button 
-                onClick={() => setShowFAQ(false)}
+                onClick={() => handleFAQToggle(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl font-bold transition"
                 aria-label="Close FAQ"
               >
