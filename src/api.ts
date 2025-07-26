@@ -1,8 +1,3 @@
-export async function getUserTasks(userId: string) {
-  const res = await fetch(`${API_URL}/tasks?createdBy=${userId}`);
-  return res.json();
-}
-
 export async function acceptTask(taskId: string, volunteerId: string) {
   const res = await fetch(`${API_URL}/tasks/${taskId}/accept/${volunteerId}`, {
     method: 'POST',

@@ -353,7 +353,7 @@ const Dashboard: React.FC = () => {
                   }} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-medium text-gray-700 mb-1">Number of Volunteers Needed:</label>
                   <input type="number" min="1" value={editingTask ? editingTask.peopleNeeded : newTask.peopleNeeded} onChange={e => {
@@ -362,6 +362,17 @@ const Dashboard: React.FC = () => {
                       setEditingTask({ ...editingTask, peopleNeeded: people });
                     } else {
                       setNewTask({ ...newTask, peopleNeeded: people });
+                    }
+                  }} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+                </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Amount (₹):</label>
+                  <input type="number" min="0" step="0.01" value={editingTask ? editingTask.amount : newTask.amount} onChange={e => {
+                    const amount = parseFloat(e.target.value);
+                    if (editingTask) {
+                      setEditingTask({ ...editingTask, amount: amount });
+                    } else {
+                      setNewTask({ ...newTask, amount: amount });
                     }
                   }} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
                 </div>
@@ -413,6 +424,7 @@ const Dashboard: React.FC = () => {
                 {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
                 <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
+                <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
                 {task.acceptedBy && task.acceptedBy.length > 0 && (
                   <div className="mt-2">
                     <b>Accepted By:</b>

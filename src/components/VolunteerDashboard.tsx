@@ -126,6 +126,7 @@ const VolunteerDashboard: React.FC = () => {
                 {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
                 <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
                 <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
+                <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
                 {/* Determine if the current user has accepted this task */}
                 {(() => {
                   const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: any) => vol._id === userId);
