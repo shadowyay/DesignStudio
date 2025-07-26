@@ -94,9 +94,13 @@ const VolunteerDashboard: React.FC = () => {
   };
 
   return (
-    <main className="max-w-4xl mx-auto my-10 px-4">
+    <main className="max-w-4xl mx-auto my-10 p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Volunteer Dashboard</h1>
+      </div>
       {!showProfile ? (
         <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          
           <h2 className="text-2xl font-bold text-blue-700 mb-6">Available Tasks</h2>
           {loading ? <p className="text-gray-500">Loading tasks...</p> : null}
           {error && <p className="text-red-500 mt-2">{error}</p>}
@@ -157,6 +161,7 @@ const VolunteerDashboard: React.FC = () => {
             ))}
           </div>
         </section>
+        
       ) : (
         <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-blue-700 mb-6">Your Profile</h2>

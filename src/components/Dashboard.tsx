@@ -8,6 +8,7 @@ const Dashboard: React.FC = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -22,6 +23,7 @@ const Dashboard: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]); // Default to India
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
   const fetchTasks = () => {
@@ -30,6 +32,44 @@ const Dashboard: React.FC = () => {
       .then((res: any) => setTasks(Array.isArray(res) ? res : []))
       .catch((err) => setError('Failed to fetch tasks'))
       .finally(() => setLoading(false));
+  };
+
+  // Function to get user's current location
+  const getCurrentLocation = (): Promise<{ lat: number; lng: number; address?: string }> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser.'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          try {
+            // Reverse geocoding to get address
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+            );
+            const data = await response.json();
+            const address = data.display_name || `${latitude}, ${longitude}`;
+            
+            resolve({ lat: latitude, lng: longitude, address });
+          } catch (error) {
+            // If reverse geocoding fails, just return coordinates
+            resolve({ lat: latitude, lng: longitude, address: `${latitude}, ${longitude}` });
+          }
+        },
+        (error) => {
+          reject(new Error('Unable to retrieve your location.'));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    });
   };
 
   useEffect(() => {
@@ -69,6 +109,47 @@ const Dashboard: React.FC = () => {
     return markerPosition === null ? null : (
       <Marker position={markerPosition}></Marker>
     );
+  };
+
+  // Function to handle opening the create task form with current location
+  const handleOpenCreateForm = async () => {
+    setLocationLoading(true);
+    setError(''); // Clear any previous errors
+    setSuccessMessage(''); // Clear any previous success messages
+    try {
+      const currentLocation = await getCurrentLocation();
+      
+      // Update map center to user's location
+      setMapCenter([currentLocation.lat, currentLocation.lng]);
+      
+      // Set marker position to user's location
+      setMarkerPosition([currentLocation.lat, currentLocation.lng]);
+      
+      // Update newTask with current location
+      setNewTask({
+        ...newTask,
+        location: {
+          address: currentLocation.address || '',
+          lat: currentLocation.lat,
+          lng: currentLocation.lng
+        }
+      });
+      
+      setShowForm(true);
+      setEditingTask(null);
+      setSuccessMessage('Location set successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Error getting location:', error);
+      setError('Failed to get your location. Please try again or set location manually.');
+      // Fallback: open form without location
+      setShowForm(true);
+      setEditingTask(null);
+      setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
+      setMarkerPosition(null);
+    } finally {
+      setLocationLoading(false);
+    }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -158,15 +239,22 @@ const Dashboard: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
         <button
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+          disabled={locationLoading}
           onClick={() => {
-            setShowForm(!showForm);
-            setEditingTask(null);
-            setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
-            setMarkerPosition(null);
+            if (showForm) {
+              // Cancel form
+              setShowForm(false);
+              setEditingTask(null);
+              setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
+              setMarkerPosition(null);
+            } else {
+              // Open form with current location
+              handleOpenCreateForm();
+            }
           }}
         >
-          {showForm ? 'Cancel' : 'Create New Task'}
+          {locationLoading ? 'Getting Location...' : (showForm ? 'Cancel' : 'Create New Task')}
         </button>
       </div>
 
@@ -184,14 +272,52 @@ const Dashboard: React.FC = () => {
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Location Address:</label>
-              <input type="text" placeholder="e.g., 123 Main St, Anytown, USA" value={editingTask ? editingTask.location?.address : newTask.location?.address} onChange={e => {
-                const newLocation = { ... (editingTask ? editingTask.location : newTask.location), address: e.target.value };
-                if (editingTask) {
-                  setEditingTask({ ...editingTask, location: newLocation });
-                } else {
-                  setNewTask({ ...newTask, location: newLocation });
-                }
-              }} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <div className="flex gap-2">
+                <input type="text" placeholder="e.g., 123 Main St, Anytown, USA" value={editingTask ? editingTask.location?.address : newTask.location?.address} onChange={e => {
+                  const newLocation = { ... (editingTask ? editingTask.location : newTask.location), address: e.target.value };
+                  if (editingTask) {
+                    setEditingTask({ ...editingTask, location: newLocation });
+                  } else {
+                    setNewTask({ ...newTask, location: newLocation });
+                  }
+                }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLocationLoading(true);
+                    setError(''); // Clear any previous errors
+                    setSuccessMessage(''); // Clear any previous success messages
+                    try {
+                      const currentLocation = await getCurrentLocation();
+                      const newLocation = {
+                        address: currentLocation.address || '',
+                        lat: currentLocation.lat,
+                        lng: currentLocation.lng
+                      };
+                      
+                      if (editingTask) {
+                        setEditingTask({ ...editingTask, location: newLocation });
+                      } else {
+                        setNewTask({ ...newTask, location: newLocation });
+                      }
+                      
+                      setMapCenter([currentLocation.lat, currentLocation.lng]);
+                      setMarkerPosition([currentLocation.lat, currentLocation.lng]);
+                      setSuccessMessage('Location updated successfully!');
+                      setTimeout(() => setSuccessMessage(''), 3000);
+                    } catch (error) {
+                      console.error('Error getting location:', error);
+                      setError('Failed to get current location. Please try again.');
+                    } finally {
+                      setLocationLoading(false);
+                    }
+                  }}
+                  disabled={locationLoading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {locationLoading ? '📍 Getting Location...' : '📍 Use My Location'}
+                </button>
+              </div>
             </div>
             <div style={{ height: '400px', width: '100%' }}>
             <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
@@ -262,6 +388,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {error && <p className="text-red-500 my-4">{error}</p>}
+      {successMessage && <p className="text-green-600 my-4 font-semibold">{successMessage}</p>}
 
       <div className="bg-white p-8 rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold text-blue-700 mb-6">Current Tasks</h2>
