@@ -157,22 +157,19 @@ const Home: React.FC = () => {
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             <div>
               <h3 className="text-xl font-semibold text-blue-600 mb-4">Help Center</h3>
-              <p className="text-gray-700 mb-6">Our comprehensive help center provides detailed guides, tutorials, and frequently asked questions to help you get the most out of SmartServe.</p>
+              <p className="text-gray-700 mb-6">Our comprehensive help center provides information and answers to common questions to help you navigate SmartServe effectively.</p>
               <div className="space-y-3">
                 <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                  <h4 className="font-semibold text-gray-800 mb-2">Getting Started Guide</h4>
-                  <p className="text-gray-600 text-sm mb-3">Learn how to create your first task or accept your first volunteer opportunity</p>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Read Guide →</button>
+                  <h4 className="font-semibold text-gray-800 mb-2">Task Management Overview</h4>
+                  <p className="text-gray-600 text-sm mb-3">Post, track, and manage your tasks from your dashboard</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                  <h4 className="font-semibold text-gray-800 mb-2">Safety Guidelines</h4>
-                  <p className="text-gray-600 text-sm mb-3">Important safety tips for both task posters and volunteers</p>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">View Guidelines →</button>
+                  <h4 className="font-semibold text-gray-800 mb-2">Exploring Volunteer Opportunities</h4>
+                  <p className="text-gray-600 text-sm mb-3">Browse and accept tasks aligning with your skills and availability</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                  <h4 className="font-semibold text-gray-800 mb-2">Payment & Compensation</h4>
-                  <p className="text-gray-600 text-sm mb-3">Understanding how payments work and ensuring fair compensation</p>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Learn More →</button>
+                  <h4 className="font-semibold text-gray-800 mb-2">Managing Your Profile</h4>
+                  <p className="text-gray-600 text-sm mb-3">Update your personal information, role, and contact details</p>
                 </div>
               </div>
             </div>

@@ -1,10 +1,7 @@
+import type { LocationData } from '../types';
+
 // Location utility functions for geocoding and location handling
 
-export interface LocationData {
-  lat: number;
-  lng: number;
-  address?: string;
-}
 
 /**
  * Get user's current location using browser geolocation API
@@ -29,12 +26,12 @@ export const getCurrentLocation = (): Promise<LocationData> => {
           const address = data.display_name || `${latitude}, ${longitude}`;
           
           resolve({ lat: latitude, lng: longitude, address });
-        } catch (error) {
+        } catch (_error) {
           // If reverse geocoding fails, just return coordinates
           resolve({ lat: latitude, lng: longitude, address: `${latitude}, ${longitude}` });
         }
       },
-      (error) => {
+      (_error) => {
         reject(new Error('Unable to retrieve your location.'));
       },
       {

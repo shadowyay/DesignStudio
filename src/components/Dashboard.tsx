@@ -5,13 +5,14 @@ import LocationMap from './LocationMap';
 import LocationPicker from './LocationPicker';
 import AddressDisplay from './AddressDisplay';
 import { getCurrentLocation } from '../utils/locationUtils';
+import type { IFrontendUser, IFrontendTask, ICreateTaskData, LocationData } from '../types';
 
 const Dashboard: React.FC = () => {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<IFrontendTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [newTask, setNewTask] = useState({
+  const [newTask, setNewTask] = useState<Omit<ICreateTaskData, 'createdBy' | 'location'> & { location: LocationData }>({ // Explicitly type newTask
     title: '',
     description: '',
     location: { address: '', lat: 0, lng: 0 },
@@ -21,7 +22,7 @@ const Dashboard: React.FC = () => {
     urgency: 'Normal',
     amount: 0,
   });
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<IFrontendTask | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]); // Default to India
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
@@ -31,8 +32,8 @@ const Dashboard: React.FC = () => {
   const fetchTasks = () => {
     setLoading(true);
     getTasks()
-      .then((res: any) => setTasks(Array.isArray(res) ? res : []))
-      .catch((err) => setError('Failed to fetch tasks'))
+      .then((res: IFrontendTask[]) => setTasks(Array.isArray(res) ? res : []))
+      .catch((_err) => setError('Failed to fetch tasks'))
       .finally(() => setLoading(false));
   };
 
@@ -127,7 +128,12 @@ const Dashboard: React.FC = () => {
         setLoading(false);
         return;
       }
-      const res = await createTask({ ...newTask, createdBy }, token);
+      const createdByUser: IFrontendUser = {
+        _id: createdBy,
+        name: localStorage.getItem('userName') || '',
+      };
+
+      const res = await createTask({ ...newTask, createdBy: createdByUser }, token);
       if (res._id) {
         fetchTasks();
         setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
@@ -136,7 +142,7 @@ const Dashboard: React.FC = () => {
       } else {
         setError(res.message || 'Failed to create task');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to create task');
     } finally {
       setLoading(false);
@@ -165,7 +171,7 @@ const Dashboard: React.FC = () => {
       } else {
         setError(res.message || 'Failed to update task');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to update task');
     } finally {
       setLoading(false);
@@ -179,12 +185,12 @@ const Dashboard: React.FC = () => {
     try {
       await deleteTask(taskId, token);
       fetchTasks();
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to delete task');
     }
   };
 
-  const startEditing = (task: any) => {
+  const startEditing = (task: IFrontendTask) => {
     setEditingTask({ ...task });
     if (task.location && task.location.lat && task.location.lng) {
       setMarkerPosition([task.location.lat, task.location.lng]);
@@ -312,7 +318,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <label className="block font-medium text-gray-700 mb-1">Urgency Level:</label>
                   <select value={editingTask ? editingTask.urgency : newTask.urgency} onChange={e => {
-                      const urgency = e.target.value;
+                      const urgency = e.target.value as 'Normal' | 'Urgent' | 'Emergency';
                       if (editingTask) {
                         setEditingTask({ ...editingTask, urgency: urgency });
                       } else {
@@ -320,6 +326,7 @@ const Dashboard: React.FC = () => {
                       }
                     }} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
                     <option>Normal</option>
+                    <option>Urgent</option>
                     <option>Emergency</option>
                   </select>
                 </div>
@@ -356,7 +363,7 @@ const Dashboard: React.FC = () => {
                   <div className="mt-2">
                     <b>Accepted By:</b>
                     <ul className="list-disc pl-6">
-                      {task.acceptedBy.map((volunteer: any) => (
+                      {task.acceptedBy.map((volunteer: IFrontendUser) => (
                         <li key={volunteer._id}>{volunteer.name} ({volunteer.email})</li>
                       ))}
                     </ul>

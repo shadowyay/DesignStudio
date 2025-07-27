@@ -19,5 +19,12 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Allow unused variables if they are prefixed with an underscore, especially in catch clauses
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_+', caughtErrorsIgnorePattern: '^_+' },
+      ],
+    },
   },
 ])

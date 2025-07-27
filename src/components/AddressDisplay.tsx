@@ -1,10 +1,8 @@
 import React from 'react';
 import { createMapUrl } from '../utils/locationUtils';
+import type { LocationData } from '../types';
 
-interface AddressDisplayProps {
-  address?: string;
-  lat?: number;
-  lng?: number;
+interface AddressDisplayProps extends LocationData {
   showMapLink?: boolean;
   className?: string;
 }

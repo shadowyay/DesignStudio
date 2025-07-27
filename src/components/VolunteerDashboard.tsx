@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
 import AddressDisplay from './AddressDisplay';
+import type { IFrontendUser, IFrontendTask } from '../types';
+
 
 const VolunteerDashboard: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<IFrontendTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [accepting, setAccepting] = useState<string | null>(null);
   const [message, setMessage] = useState('');
-  const [profile, setProfile] = useState<any>({});
+  const [profile, setProfile] = useState<IFrontendUser | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
@@ -21,26 +23,30 @@ const VolunteerDashboard: React.FC = () => {
     if (!showProfile) {
       setLoading(true);
       getTasks()
-        .then(res => {
-          const filteredTasks = Array.isArray(res) ? res.filter((task: any) => {
+        .then((res: IFrontendTask[]) => {
+          const filteredTasks = Array.isArray(res) ? res.filter((task: IFrontendTask) => {
             const isAcceptedByAnyone = task.acceptedBy && task.acceptedBy.length > 0;
-            const currentUserAccepted = isAcceptedByAnyone && userId && task.acceptedBy.some((vol: any) => vol._id === userId);
+            const currentUserAccepted = isAcceptedByAnyone && userId && task.acceptedBy?.some((vol: IFrontendUser) => vol._id === userId);
             // Show task if no one has accepted it OR if the current user has accepted it
             return !isAcceptedByAnyone || currentUserAccepted;
           }) : [];
           setTasks(filteredTasks);
           setError('');
         })
-        .catch(() => setError('Failed to load tasks'))
+        .catch((_err) => setError('Failed to load tasks'))
         .finally(() => setLoading(false));
     } else if (userId) {
       setProfileLoading(true);
       getUserProfile(userId)
-        .then(data => {
-          setProfile(data);
-          setProfileError('');
+        .then((data) => {
+          if (data && data._id) { // Ensure data and _id exist before setting profile
+            setProfile(data);
+            setProfileError('');
+          } else {
+            setProfileError('Failed to load profile: Invalid data received.');
+          }
         })
-        .catch(() => setProfileError('Failed to load profile'))
+        .catch((_err) => setProfileError('Failed to load profile'))
         .finally(() => setProfileLoading(false));
     }
   }, [showProfile, userId]);
@@ -68,14 +74,28 @@ const VolunteerDashboard: React.FC = () => {
       } else {
         setMessage(result.message || 'Could not accept task.');
       }
-    } catch (err) {
+    } catch (_err) {
       setMessage('Error accepting task.');
     }
     setAccepting(null);
   };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+    setProfile((prevProfile: IFrontendUser | null) => {
+      // If prevProfile is null, it means profile data hasn't loaded or an error occurred.
+      // We should not attempt to update it in this state.
+      if (!prevProfile) {
+        console.error("Attempted to update profile before it was loaded.");
+        return null; // Do not update state if prevProfile is null
+      }
+
+      const updatedProfile = {
+        ...prevProfile,
+        [e.target.name]: e.target.value,
+      } as IFrontendUser; // Assert the type to ensure all IFrontendUser properties are considered
+
+      return updatedProfile;
+    });
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -85,9 +105,13 @@ const VolunteerDashboard: React.FC = () => {
     setProfileMessage('');
     setProfileError('');
     try {
+      if (!profile) {
+        setProfileError('Profile data is not loaded.');
+        return;
+      }
       await updateUserProfile(userId, profile);
       setProfileMessage('Profile updated successfully!');
-    } catch (err) {
+    } catch (_err) {
       setProfileError('Failed to update profile.');
     } finally {
       setProfileLoading(false);
@@ -124,7 +148,7 @@ const VolunteerDashboard: React.FC = () => {
                 <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
                 {/* Determine if the current user has accepted this task */}
                 {(() => {
-                  const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: any) => vol._id === userId);
+                  const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId);
 
                   if (currentUserAccepted) {
                     return (
@@ -135,7 +159,7 @@ const VolunteerDashboard: React.FC = () => {
                           <div className="mb-2">
                             <b>Accepted Volunteers List:</b>
                             <ul className="list-disc pl-6">
-                              {task.acceptedBy.map((vol: any) => (
+                              {task.acceptedBy.map((vol: IFrontendUser) => (
                                 <li key={vol._id}>{vol.name} ({vol.email})</li>
                               ))}
                             </ul>
@@ -167,23 +191,23 @@ const VolunteerDashboard: React.FC = () => {
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <div>
               <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
-              <input type="text" name="name" value={profile.name || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="name" value={profile?.name || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Email:</label>
-              <input type="email" name="email" value={profile.email || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="email" name="email" value={profile?.email || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Phone:</label>
-              <input type="tel" name="phone" value={profile.phone || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="tel" name="phone" value={profile?.phone || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
-              <input type="text" name="location" value={profile.location || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="location" value={profile?.location || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Skills / Interests:</label>
-              <input type="text" name="skills" value={profile.skills || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+              <input type="text" name="skills" value={profile?.skills || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={profileLoading}>
               {profileLoading ? 'Updating...' : 'Update Profile'}

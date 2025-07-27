@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../api';
+import type {RegisterData} from '../types'
 
 type AuthFormProps = {
   isVolunteer?: boolean;
@@ -36,7 +37,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
       } else {
         setError(res.message || 'Login failed');
       }
-    } catch (err) {
+    } catch (_err) { 
       setError('Login failed');
     }
     setLoading(false);
@@ -47,7 +48,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     setLoading(true);
     setError('');
     try {
-      const data: any = {
+      const data: RegisterData = {
         name,
         dob,
         email,
@@ -63,7 +64,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
       } else {
         setError(res.message || 'Registration failed');
       }
-    } catch (err) {
+    } catch (_err) { 
       setError('Registration failed');
     }
     setLoading(false);

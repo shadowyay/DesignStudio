@@ -1,3 +1,5 @@
+import type { IFrontendUser, RegisterData, ICreateTaskData } from './types';
+
 export async function acceptTask(taskId: string, volunteerId: string) {
   const res = await fetch(`${API_URL}/tasks/${taskId}/accept/${volunteerId}`, {
     method: 'POST',
@@ -17,7 +19,7 @@ export async function login(email: string, password: string) {
   return res.json();
 }
 
-export async function register(data: any) {
+export async function register(data: RegisterData) {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -31,7 +33,7 @@ export async function getTasks() {
   return res.json();
 }
 
-export async function createTask(data: any, token: string) {
+export async function createTask(data: ICreateTaskData, token: string) {
   const res = await fetch(`${API_URL}/tasks`, {
     method: 'POST',
     headers: {
@@ -46,12 +48,13 @@ export async function createTask(data: any, token: string) {
   return res.json();
 }
 
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: string): Promise<IFrontendUser> {
   const res = await fetch(`${API_URL}/user/${userId}`);
-  return res.json();
+  const data: IFrontendUser = await res.json();
+  return data;
 }
 
-export async function updateUserProfile(userId: string, data: any) {
+export async function updateUserProfile(userId: string, data: IFrontendUser) {
   const res = await fetch(`${API_URL}/user/${userId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

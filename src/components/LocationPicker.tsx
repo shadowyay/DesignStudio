@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
 import { getCurrentLocation, createMapUrl } from '../utils/locationUtils';
-
-interface LocationPickerProps {
-  address: string;
-  onAddressChange: (address: string) => void;
-  onLocationChange: (lat: number, lng: number) => void;
-  onCurrentLocationClick: () => void;
-  loading?: boolean;
-  disabled?: boolean;
-}
+import type { LocationPickerProps } from '../types';
 
 const LocationPicker: React.FC<LocationPickerProps> = ({
   address,

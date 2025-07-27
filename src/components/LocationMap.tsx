@@ -1,14 +1,7 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-
-interface LocationMapProps {
-  center: [number, number];
-  markerPosition: [number, number] | null;
-  onLocationSelect: (lat: number, lng: number) => void;
-  height?: string;
-  zoom?: number;
-}
+import type { LocationMapProps } from '../types';
 
 const LocationMap: React.FC<LocationMapProps> = ({
   center,
