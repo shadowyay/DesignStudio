@@ -213,6 +213,7 @@ const Dashboard: React.FC = () => {
     setEditingTask({ ...task });
     if (task.location && task.location.lat && task.location.lng) {
       setMarkerPosition([task.location.lat, task.location.lng]);
+      setMapCenter([task.location.lat, task.location.lng]); // Set map center when editing
     }
     setShowForm(true);
   };
@@ -258,7 +259,6 @@ const Dashboard: React.FC = () => {
               onAddressChange={(address) => setNewTask({ ...newTask, location: { ...newTask.location, address } })}
               onLocationChange={handleLocationSelect}
               loading={locationLoading}
-              disabled={false} // Always enabled for editing
               onCurrentLocationClick={() => console.log('Current location button clicked for New Task')}
               lat={newTask.location?.lat}
               lng={newTask.location?.lng}
