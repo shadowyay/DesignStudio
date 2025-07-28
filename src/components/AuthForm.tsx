@@ -29,18 +29,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     try {
       const res = await login(email, password);
       if (res.token && res.user && res.user._id) {
-        // Save token, user ID, and user name, redirect to dashboard
+        // Save token, user ID, and user name
         localStorage.setItem('token', res.token);
         localStorage.setItem('userId', res.user._id);
         localStorage.setItem('userName', res.user.name);
+        setLoading(false); // Set loading to false BEFORE navigation
         navigate(isVolunteer ? '/volunteer/dashboard' : '/user/dashboard');
       } else {
         setError(res.message || 'Login failed');
+        setLoading(false);
       }
     } catch (_err) { 
       setError('Login failed');
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {

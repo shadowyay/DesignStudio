@@ -1,14 +1,18 @@
 import type { IFrontendUser, RegisterData, ICreateTaskData } from './types';
 
-export async function acceptTask(taskId: string, volunteerId: string) {
+// API utility for frontend to connect to backend
+export const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api`;
+
+export async function acceptTask(taskId: string, volunteerId: string, token: string) {
   const res = await fetch(`${API_URL}/tasks/${taskId}/accept/${volunteerId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
   });
   return res.json();
 }
-// API utility for frontend to connect to backend
-export const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api`;
 
 export async function login(email: string, password: string) {
   const res = await fetch(`${API_URL}/auth/login`, {
@@ -40,24 +44,28 @@ export async function createTask(data: ICreateTaskData, token: string) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify({
-      ...data,
-      location: data.location // should be { address, lat, lng }
-    })
+    body: JSON.stringify({...data})
   });
   return res.json();
 }
 
-export async function getUserProfile(userId: string): Promise<IFrontendUser> {
-  const res = await fetch(`${API_URL}/user/${userId}`);
+export async function getUserProfile(userId: string, token: string): Promise<IFrontendUser> {
+  const res = await fetch(`${API_URL}/user/${userId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
   const data: IFrontendUser = await res.json();
   return data;
 }
 
-export async function updateUserProfile(userId: string, data: IFrontendUser) {
+export async function updateUserProfile(userId: string, data: IFrontendUser, token: string) {
   const res = await fetch(`${API_URL}/user/${userId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
     body: JSON.stringify(data)
   });
   return res.json();
