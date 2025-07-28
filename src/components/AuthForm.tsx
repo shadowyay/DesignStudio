@@ -21,6 +21,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
   const [dob, setDob] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
+  const [passwordError, setPasswordError] = useState(''); // New state for password validation errors
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +50,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setPasswordError(''); // Clear previous password errors
+
+    // Password validation
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const data: RegisterData = {
         name,
@@ -117,7 +127,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
             <div>
               <label className="block font-medium text-gray-700 mb-1">Password:</label>
               <input type="password" name="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
-              <small className="text-gray-500 block mt-1">Password must be at least 8 characters with letters and numbers.</small>
+              {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
+              <small className="text-gray-500 block mt-1">Password must be at least 6 characters long.</small>
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Location:</label>

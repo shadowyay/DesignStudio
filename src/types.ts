@@ -79,4 +79,6 @@ export interface LocationPickerProps {
   onCurrentLocationClick: () => void;
   loading?: boolean;
   disabled?: boolean;
+  lat?: number; // Add lat to props
+  lng?: number; // Add lng to props
 }

@@ -57,7 +57,7 @@ export const formatLocation = (location: LocationData): string => {
  * Create OpenStreetMap URL for a location
  */
 export const createMapUrl = (lat: number, lng: number, zoom: number = 18): string => {
-  return `https://www.openstreetmap.org/#map=${zoom}/${lat}/${lng}`;
+  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=${zoom}/${lat}/${lng}`;
 };
 
 /**

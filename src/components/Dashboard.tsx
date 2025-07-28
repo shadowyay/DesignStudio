@@ -59,14 +59,33 @@ const Dashboard: React.FC = () => {
     }
   }, [showForm, editingTask]);
 
-  const handleLocationSelect = (lat: number, lng: number) => {
+  const handleLocationSelect = async (lat: number, lng: number) => {
     const newLatLng: [number, number] = [lat, lng];
     setMarkerPosition(newLatLng);
-    const locationDetails = { ...newTask.location, lat, lng };
-    if (editingTask) {
-      setEditingTask({ ...editingTask, location: locationDetails });
-    } else {
-      setNewTask({ ...newTask, location: locationDetails });
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      const address = data.display_name || `${lat}, ${lng}`;
+      const locationDetails = { address, lat, lng };
+      if (editingTask) {
+        setEditingTask({ ...editingTask, location: locationDetails });
+        console.log('Editing Task Location Updated:', locationDetails);
+      } else {
+        setNewTask({ ...newTask, location: locationDetails });
+        console.log('New Task Location Updated:', locationDetails);
+      }
+    } catch (error) {
+      console.error("Error during reverse geocoding:", error);
+      // Fallback to just updating lat/lng if geocoding fails
+      const locationDetails = { ...newTask.location, lat, lng };
+      if (editingTask) {
+        setEditingTask({ ...editingTask, location: locationDetails });
+      } else {
+        setNewTask({ ...newTask, location: locationDetails });
+      }
+      setError('Failed to get address for selected location.');
     }
   };
 
@@ -235,37 +254,20 @@ const Dashboard: React.FC = () => {
               <textarea value={editingTask ? editingTask.description : newTask.description} onChange={e => editingTask ? setEditingTask({ ...editingTask, description: e.target.value }) : setNewTask({ ...newTask, description: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" rows={3}></textarea>
             </div>
             <LocationPicker
-              address={editingTask ? editingTask.location?.address || '' : newTask.location?.address || ''}
-              onAddressChange={(address) => {
-                const newLocation = { ...(editingTask ? editingTask.location : newTask.location), address };
-                if (editingTask) {
-                  setEditingTask({ ...editingTask, location: newLocation });
-                } else {
-                  setNewTask({ ...newTask, location: newLocation });
-                }
-              }}
-              onLocationChange={(lat, lng) => {
-                const newLocation = { ...(editingTask ? editingTask.location : newTask.location), lat, lng };
-                if (editingTask) {
-                  setEditingTask({ ...editingTask, location: newLocation });
-                } else {
-                  setNewTask({ ...newTask, location: newLocation });
-                }
-                setMapCenter([lat, lng]);
-                setMarkerPosition([lat, lng]);
-              }}
-              onCurrentLocationClick={() => {
-                setSuccessMessage('Location updated successfully!');
-                setTimeout(() => setSuccessMessage(''), 3000);
-              }}
+              address={newTask.location?.address || ''}
+              onAddressChange={(address) => setNewTask({ ...newTask, location: { ...newTask.location, address } })}
+              onLocationChange={handleLocationSelect}
               loading={locationLoading}
+              disabled={false} // Always enabled for editing
+              onCurrentLocationClick={() => console.log('Current location button clicked for New Task')}
+              lat={newTask.location?.lat}
+              lng={newTask.location?.lng}
             />
-            
             <LocationMap
               center={mapCenter}
               markerPosition={markerPosition}
               onLocationSelect={handleLocationSelect}
-              height="400px"
+              height="300px"
             />
             <p className="text-sm text-gray-600 mt-2">Click on the map to set the task location.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

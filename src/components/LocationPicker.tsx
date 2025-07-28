@@ -8,9 +8,13 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   onLocationChange,
   onCurrentLocationClick,
   loading = false,
-  disabled = false
+  disabled = false,
+  lat = 0, // Default to 0 if not provided
+  lng = 0  // Default to 0 if not provided
 }) => {
   const [showMapLink, setShowMapLink] = useState(false);
+
+  console.log('LocationPicker received lat, lng:', lat, lng);
 
   const handleUseCurrentLocation = async () => {
     try {
@@ -56,7 +60,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
           </button>
           {showMapLink && (
             <a
-              href={createMapUrl(0, 0)} // You might want to pass actual coordinates here
+              href={createMapUrl(lat, lng)} // Use actual coordinates here
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:text-blue-800 text-sm"
