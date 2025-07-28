@@ -79,7 +79,8 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error("Error during reverse geocoding:", error);
       // Fallback to just updating lat/lng if geocoding fails
-      const locationDetails = { ...newTask.location, lat, lng };
+      const baseLocation = editingTask ? editingTask.location : newTask.location;
+      const locationDetails = { ...baseLocation, lat, lng };
       if (editingTask) {
         setEditingTask({ ...editingTask, location: locationDetails });
       } else {
