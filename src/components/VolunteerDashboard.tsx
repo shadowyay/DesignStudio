@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
 import AddressDisplay from './AddressDisplay';
@@ -18,6 +17,7 @@ const VolunteerDashboard: React.FC = () => {
   const [profileMessage, setProfileMessage] = useState('');
 
   const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token'); // Retrieve token here
 
   useEffect(() => {
     if (!showProfile) {
@@ -37,7 +37,12 @@ const VolunteerDashboard: React.FC = () => {
         .finally(() => setLoading(false));
     } else if (userId) {
       setProfileLoading(true);
-      getUserProfile(userId)
+      if (!token) {
+        setProfileError('Authentication token not found. Please log in again.');
+        setProfileLoading(false);
+        return;
+      }
+      getUserProfile(userId, token) // Pass token
         .then((data) => {
           if (data && data._id) { // Ensure data and _id exist before setting profile
             setProfile(data);
@@ -49,7 +54,7 @@ const VolunteerDashboard: React.FC = () => {
         .catch((_err) => setProfileError('Failed to load profile'))
         .finally(() => setProfileLoading(false));
     }
-  }, [showProfile, userId]);
+  }, [showProfile, userId, token]); 
 
   const handleAccept = async (taskId: string) => {
     if (!userId) {
@@ -59,7 +64,12 @@ const VolunteerDashboard: React.FC = () => {
     setAccepting(taskId);
     setMessage('');
     try {
-      const result = await acceptTask(taskId, userId);
+      if (!token) {
+        setMessage('Authentication token not found. Please log in.');
+        setAccepting(null);
+        return;
+      }
+      const result = await acceptTask(taskId, userId, token); // Pass token
       if (result.success) {
         setMessage('Task accepted!');
         // Find the task in the current state and update it with the new data from the server.
@@ -109,7 +119,12 @@ const VolunteerDashboard: React.FC = () => {
         setProfileError('Profile data is not loaded.');
         return;
       }
-      await updateUserProfile(userId, profile);
+      if (!token) {
+        setProfileError('Authentication token not found. Cannot update profile.');
+        setProfileLoading(false);
+        return;
+      }
+      await updateUserProfile(userId, profile, token); // Pass token
       setProfileMessage('Profile updated successfully!');
     } catch (_err) {
       setProfileError('Failed to update profile.');

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { createTask, getTasks, deleteTask } from '../api';
 import LocationMap from './LocationMap';
