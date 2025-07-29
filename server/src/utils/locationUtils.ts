@@ -9,7 +9,7 @@ export interface LocationData {
 /**
  * Validate location data
  */
-export const validateLocation = (location: any): boolean => {
+export const validateLocation = (location: LocationData): boolean => {
   if (!location || typeof location !== 'object') {
     return false;
   }

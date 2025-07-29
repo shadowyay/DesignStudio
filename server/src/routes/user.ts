@@ -8,7 +8,7 @@ router.get('/:id', async (req, res) => {
   try {
     const user = await getUserById(req.params.id);
     res.json(user);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -18,7 +18,7 @@ router.put('/:id', async (req, res) => {
   try {
     const updatedUser = await updateUserProfile(req.params.id, req.body);
     res.json(updatedUser);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Server error' });
   }
 });

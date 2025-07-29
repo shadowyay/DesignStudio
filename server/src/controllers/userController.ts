@@ -1,5 +1,13 @@
 import User from '../models/User';
 
+interface IUserUpdate {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  skills?: string;
+}
+
 export const getUserById = async (userId: string) => {
   const user = await User.findById(userId).select('-password');
   if (!user) {
@@ -8,7 +16,7 @@ export const getUserById = async (userId: string) => {
   return user;
 };
 
-export const updateUserProfile = async (userId: string, updateData: any) => {
+export const updateUserProfile = async (userId: string, updateData: IUserUpdate) => {
   const { name, email, phone, location, skills } = updateData;
   
   const updatedUser = await User.findByIdAndUpdate(

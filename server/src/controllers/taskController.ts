@@ -1,9 +1,10 @@
 import Task from '../models/Task';
 import User from '../models/User';
 import { validateLocation, formatLocationForDB } from '../utils/locationUtils';
-import mongoose from 'mongoose';
+import mongoose, { FilterQuery } from 'mongoose';
+import { ITask } from '../models/Task';
 
-export const createTask = async (taskData: any) => {
+export const createTask = async (taskData: Omit<ITask, 'acceptedBy' | 'createdAt' | 'updatedAt' | '_id'>) => {
   const { title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime, amount } = taskData;
   
   // Validate user exists
@@ -36,7 +37,7 @@ export const createTask = async (taskData: any) => {
   return await task.save();
 };
 
-export const getTasks = async (filter: any = {}) => {
+export const getTasks = async (filter: FilterQuery<ITask> = {}) => {
   const tasks = await Task.find(filter)
     .populate('createdBy', 'name email')
     .populate('acceptedBy', 'name email');
