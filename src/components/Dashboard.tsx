@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createTask, getTasks, deleteTask } from '../api';
+import { createTask, getTasks, deleteTask, getUserProfile, updateUserProfile } from '../api';
 import LocationMap from './LocationMap';
 import LocationPicker from './LocationPicker';
 import AddressDisplay from './AddressDisplay';
 import { getCurrentLocation } from '../utils/locationUtils';
 import type { IFrontendUser, IFrontendTask, ICreateTaskData, LocationData } from '../types';
+import NavBar from './NavBar';
 
 const Dashboard: React.FC = () => {
   const [tasks, setTasks] = useState<IFrontendTask[]>([]);
@@ -26,6 +27,11 @@ const Dashboard: React.FC = () => {
   const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]); // Default to India
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState<IFrontendUser | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileMessage, setProfileMessage] = useState('');
   const formRef = useRef<HTMLDivElement>(null);
 
   const fetchTasks = () => {
@@ -57,6 +63,31 @@ const Dashboard: React.FC = () => {
       formRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [showForm, editingTask]);
+
+  // Load profile when profile section is shown
+  useEffect(() => {
+    if (showProfile) {
+      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem('token');
+      
+      if (userId && token) {
+        setProfileLoading(true);
+        setProfileError('');
+        getUserProfile(userId, token)
+          .then((data) => {
+            if (data && data._id) {
+              setProfile(data);
+            } else {
+              setProfileError('Failed to load profile: Invalid data received.');
+            }
+          })
+          .catch((_err) => setProfileError('Failed to load profile'))
+          .finally(() => setProfileLoading(false));
+      } else {
+        setProfileError('Authentication token not found. Please log in again.');
+      }
+    }
+  }, [showProfile]);
 
   const handleLocationSelect = async (lat: number, lng: number) => {
     const newLatLng: [number, number] = [lat, lng];
@@ -218,31 +249,87 @@ const Dashboard: React.FC = () => {
     setShowForm(true);
   };
 
-  return (
-    <main className="max-w-4xl mx-auto my-10 p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName')}</h1>
-        <button
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-          disabled={locationLoading}
-          onClick={() => {
-            if (showForm) {
-              // Cancel form
-              setShowForm(false);
-              setEditingTask(null);
-              setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
-              setMarkerPosition(null);
-            } else {
-              // Open form with current location
-              handleOpenCreateForm();
-            }
-          }}
-        >
-          {locationLoading ? 'Getting Location...' : (showForm ? 'Cancel' : 'Create New Task')}
-        </button>
-      </div>
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfile((prevProfile: IFrontendUser | null) => {
+      if (!prevProfile) {
+        console.error("Attempted to update profile before it was loaded.");
+        return null;
+      }
 
-      {showForm && (
+      const updatedProfile = {
+        ...prevProfile,
+        [e.target.name]: e.target.value,
+      } as IFrontendUser;
+
+      return updatedProfile;
+    });
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
+    
+    if (!userId || !token) {
+      setProfileError('Authentication token not found. Cannot update profile.');
+      return;
+    }
+
+    if (!profile) {
+      setProfileError('Profile data is not loaded.');
+      return;
+    }
+
+    setProfileLoading(true);
+    setProfileMessage('');
+    setProfileError('');
+    
+    try {
+      await updateUserProfile(userId, profile, token);
+      setProfileMessage('Profile updated successfully!');
+      // Update localStorage with new values
+      if (profile.name) localStorage.setItem('userName', profile.name);
+      if (profile.email) localStorage.setItem('userEmail', profile.email);
+    } catch (_err) {
+      setProfileError('Failed to update profile.');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <NavBar 
+        userType="user" 
+        onProfileToggle={() => setShowProfile(!showProfile)}
+        showProfile={showProfile}
+      />
+      <main className="max-w-4xl mx-auto my-10 p-4">
+      {!showProfile && (
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName')}</h1>
+          <button
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            disabled={locationLoading}
+            onClick={() => {
+              if (showForm) {
+                // Cancel form
+                setShowForm(false);
+                setEditingTask(null);
+                setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
+                setMarkerPosition(null);
+              } else {
+                // Open form with current location
+                handleOpenCreateForm();
+              }
+            }}
+          >
+            {locationLoading ? 'Getting Location...' : (showForm ? 'Cancel' : 'Create New Task')}
+          </button>
+        </div>
+      )}
+
+      {!showProfile && showForm && (
         <div ref={formRef} className="bg-white p-8 rounded-2xl shadow-lg mb-8">
           <h2 className="text-2xl font-bold text-blue-700 mb-6">{editingTask ? 'Edit Task' : 'Create New Task'}</h2>
           <form onSubmit={editingTask ? handleUpdateTask : handleCreateTask} className="space-y-4">
@@ -340,10 +427,12 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {error && <p className="text-red-500 my-4">{error}</p>}
-      {successMessage && <p className="text-green-600 my-4 font-semibold">{successMessage}</p>}
+      {!showProfile && (
+        <>
+          {error && <p className="text-red-500 my-4">{error}</p>}
+          {successMessage && <p className="text-green-600 my-4 font-semibold">{successMessage}</p>}
 
-      <div className="bg-white p-8 rounded-2xl shadow-lg">
+          <div className="bg-white p-8 rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold text-blue-700 mb-6">Tasks Posted by You</h2>
         {loading ? <p>Loading tasks...</p> : (
           <ul className="space-y-4">
@@ -382,7 +471,87 @@ const Dashboard: React.FC = () => {
           </ul>
         )}
       </div>
+        </>
+      )}
+
+      {/* Profile Section */}
+      {showProfile && (
+        <div className="bg-white p-8 rounded-2xl shadow-lg mb-8">
+          <h2 className="text-2xl font-bold text-blue-700 mb-6">Your Profile</h2>
+          {profileLoading && <p className="text-gray-500">Loading profile...</p>}
+          {profileError && <p className="text-red-500 mt-2">{profileError}</p>}
+          {profileMessage && <p className="text-green-600 mt-2">{profileMessage}</p>}
+          
+          {profile ? (
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  value={profile.name || ''} 
+                  onChange={handleProfileChange} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                />
+              </div>
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Email:</label>
+                <input 
+                  type="email" 
+                  name="email" 
+                  value={profile.email || ''} 
+                  onChange={handleProfileChange} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                />
+              </div>
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Phone:</label>
+                <input 
+                  type="tel" 
+                  name="phone" 
+                  value={profile.phone || ''} 
+                  onChange={handleProfileChange} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                />
+              </div>
+                             <div>
+                 <label className="block font-medium text-gray-700 mb-1">Location:</label>
+                 <input 
+                   type="text" 
+                   name="location" 
+                   value={profile.location || ''} 
+                   onChange={handleProfileChange} 
+                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                 />
+               </div>
+               <button 
+                 type="submit" 
+                 className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" 
+                 disabled={profileLoading}
+               >
+                 {profileLoading ? 'Updating...' : 'Update Profile'}
+               </button>
+            </form>
+          ) : (
+                         <div className="space-y-4">
+               <div>
+                 <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
+                 <p className="text-gray-900">{localStorage.getItem('userName') || 'Not set'}</p>
+               </div>
+               <div>
+                 <label className="block font-medium text-gray-700 mb-1">Email:</label>
+                 <p className="text-gray-900">{localStorage.getItem('userEmail') || 'Not set'}</p>
+               </div>
+               <div>
+                 <label className="block font-medium text-gray-700 mb-1">User ID:</label>
+                 <p className="text-gray-900">{localStorage.getItem('userId') || 'Not set'}</p>
+               </div>
+             </div>
+          )}
+        </div>
+      )}
     </main>
+    </>
   );
 };
 

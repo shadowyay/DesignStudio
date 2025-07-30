@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
 import AddressDisplay from './AddressDisplay';
 import type { IFrontendUser, IFrontendTask } from '../types';
+import NavBar from './NavBar';
 
 
 const VolunteerDashboard: React.FC = () => {
@@ -134,7 +135,13 @@ const VolunteerDashboard: React.FC = () => {
   };
 
   return (
-    <main className="max-w-4xl mx-auto my-10 p-4">
+    <>
+      <NavBar 
+        userType="volunteer" 
+        onProfileToggle={() => setShowProfile(!showProfile)}
+        showProfile={showProfile}
+      />
+      <main className="max-w-4xl mx-auto my-10 p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName') || 'Volunteer'}</h1>
       </div>
@@ -230,10 +237,9 @@ const VolunteerDashboard: React.FC = () => {
           </form>
         </section>
       )}
-      <button className="fixed bottom-8 right-8 bg-blue-600 text-white rounded-full shadow-lg px-6 py-3 font-bold text-lg hover:bg-blue-700 transition" onClick={() => setShowProfile(!showProfile)}>
-        {showProfile ? 'Back to Dashboard' : 'Profile'}
-      </button>
+
     </main>
+    </>
   );
 };
 
