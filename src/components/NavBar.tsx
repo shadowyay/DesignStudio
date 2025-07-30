@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface NavBarProps {
@@ -9,10 +9,31 @@ interface NavBarProps {
 
 const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   
   const userName = localStorage.getItem('userName') || 'User';
   const userEmail = localStorage.getItem('userEmail') || '';
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show navbar when scrolling to top
+      if (currentScrollY <= 10) {
+        setIsVisible(true);
+      } else {
+        // Hide when scrolling up, show when scrolling down
+        setIsVisible(currentScrollY < lastScrollY);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -27,7 +48,9 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className={`bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
+      isVisible ? 'translate-y-0' : '-translate-y-full'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Left side - SmartServe branding */}

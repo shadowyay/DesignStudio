@@ -71,6 +71,20 @@ export async function updateUserProfile(userId: string, data: IFrontendUser, tok
   return res.json();
 }
 
+export async function uploadProfilePicture(file: File, token: string) {
+  const formData = new FormData();
+  formData.append('profilePicture', file);
+
+  const res = await fetch(`${API_URL}/upload/profile-picture`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData
+  });
+  return res.json();
+}
+
 export async function deleteTask(taskId: string, token: string) {
   const res = await fetch(`${API_URL}/tasks/${taskId}`, {
     method: 'DELETE',

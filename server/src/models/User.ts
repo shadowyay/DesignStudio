@@ -10,6 +10,8 @@ export interface IUser extends Document {
   role: 'user' | 'volunteer';
   skills?: string;
   openToAnything?: boolean;
+  profilePicture?: string;
+  about?: string;
 }
 
 const UserSchema: Schema = new Schema({
@@ -21,7 +23,9 @@ const UserSchema: Schema = new Schema({
   location: { type: String, required: true },
   role: { type: String, enum: ['user', 'volunteer'], required: true },
   skills: { type: String },
-  openToAnything: { type: Boolean }
+  openToAnything: { type: Boolean },
+  profilePicture: { type: String },
+  about: { type: String }
 });
 
 export default mongoose.model<IUser>('User', UserSchema);

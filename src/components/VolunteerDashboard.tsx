@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
 import AddressDisplay from './AddressDisplay';
+import PublicProfile from './PublicProfile';
 import type { IFrontendUser, IFrontendTask } from '../types';
 import NavBar from './NavBar';
 
 
 const VolunteerDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [showProfile, setShowProfile] = useState(false);
   const [tasks, setTasks] = useState<IFrontendTask[]>([]);
   const [loading, setLoading] = useState(false);
@@ -16,6 +19,8 @@ const VolunteerDashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
 
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token'); // Retrieve token here
@@ -91,7 +96,7 @@ const VolunteerDashboard: React.FC = () => {
     setAccepting(null);
   };
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile((prevProfile: IFrontendUser | null) => {
       // If prevProfile is null, it means profile data hasn't loaded or an error occurred.
       // We should not attempt to update it in this state.
@@ -125,8 +130,29 @@ const VolunteerDashboard: React.FC = () => {
         setProfileLoading(false);
         return;
       }
-      await updateUserProfile(userId, profile, token); // Pass token
+      // Handle file upload first if a new file is selected
+      let updatedProfile = { ...profile };
+      if (profilePictureFile) {
+        const formData = new FormData();
+        formData.append('profilePicture', profilePictureFile);
+        
+        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/profile-picture`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          updatedProfile.profilePicture = uploadData.fileUrl;
+        }
+      }
+
+      await updateUserProfile(userId, updatedProfile, token); // Pass token
       setProfileMessage('Profile updated successfully!');
+      
+      // Clear file upload state
+      setProfilePictureFile(null);
+      setProfilePicturePreview('');
     } catch (_err) {
       setProfileError('Failed to update profile.');
     } finally {
@@ -141,7 +167,7 @@ const VolunteerDashboard: React.FC = () => {
         onProfileToggle={() => setShowProfile(!showProfile)}
         showProfile={showProfile}
       />
-      <main className="max-w-4xl mx-auto my-10 p-4">
+      <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName') || 'Volunteer'}</h1>
       </div>
@@ -176,17 +202,27 @@ const VolunteerDashboard: React.FC = () => {
                     return (
                       <>
                         <p className="text-green-600 font-bold">You have accepted this task!</p>
-                        {/* Display the full list of accepted volunteers only if the current user has accepted it */}
-                        {task.acceptedBy && task.acceptedBy.length > 0 && (
-                          <div className="mb-2">
-                            <b>Accepted Volunteers List:</b>
-                            <ul className="list-disc pl-6">
-                              {task.acceptedBy.map((vol: IFrontendUser) => (
-                                <li key={vol._id}>{vol.name} ({vol.email})</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                                                 {/* Display the full list of accepted volunteers only if the current user has accepted it */}
+                         {task.acceptedBy && task.acceptedBy.length > 0 && (
+                           <div className="mt-4">
+                             <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
+                             <div className="space-y-3">
+                               {task.acceptedBy.map((vol: IFrontendUser) => (
+                                 <div key={vol._id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                                   <PublicProfile
+                                     userId={vol._id || ''}
+                                     userName={vol.name || 'Unknown User'}
+                                     userEmail={vol.email || ''}
+                                     isClickable={true}
+                                                                        onProfileClick={() => {
+                                     navigate(`/profile/${vol._id}`);
+                                   }}
+                                   />
+                                 </div>
+                               ))}
+                             </div>
+                           </div>
+                         )}
                       </>
                     );
                   } else if (task.isFull) {
@@ -227,10 +263,52 @@ const VolunteerDashboard: React.FC = () => {
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
               <input type="text" name="location" value={profile?.location || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
-            <div>
-              <label className="block font-medium text-gray-700 mb-1">Skills / Interests:</label>
-              <input type="text" name="skills" value={profile?.skills || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
-            </div>
+                         <div>
+               <label className="block font-medium text-gray-700 mb-1">Skills / Interests:</label>
+               <input type="text" name="skills" value={profile?.skills || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+             </div>
+             <div>
+               <label className="block font-medium text-gray-700 mb-1">Profile Picture:</label>
+               <input 
+                 type="file" 
+                 name="profilePicture" 
+                 accept="image/*"
+                 onChange={e => {
+                   const file = e.target.files?.[0] || null;
+                   setProfilePictureFile(file);
+                   if (file) {
+                     const reader = new FileReader();
+                     reader.onload = (e) => {
+                       setProfilePicturePreview(e.target?.result as string);
+                     };
+                     reader.readAsDataURL(file);
+                   } else {
+                     setProfilePicturePreview('');
+                   }
+                 }}
+                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+               />
+               {(profilePicturePreview || profile?.profilePicture) && (
+                 <div className="mt-2">
+                   <img 
+                     src={profilePicturePreview || profile?.profilePicture} 
+                     alt="Profile Preview" 
+                     className="w-20 h-20 object-cover rounded-lg border"
+                   />
+                 </div>
+               )}
+             </div>
+             <div>
+               <label className="block font-medium text-gray-700 mb-1">About:</label>
+               <textarea 
+                 name="about" 
+                 value={profile?.about || ''} 
+                 onChange={handleProfileChange} 
+                 rows={3}
+                 placeholder="Tell us about yourself..."
+                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+               />
+             </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={profileLoading}>
               {profileLoading ? 'Updating...' : 'Update Profile'}
             </button>

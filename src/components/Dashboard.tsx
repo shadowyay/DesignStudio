@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createTask, getTasks, deleteTask, getUserProfile, updateUserProfile } from '../api';
 import LocationMap from './LocationMap';
 import LocationPicker from './LocationPicker';
 import AddressDisplay from './AddressDisplay';
+import PublicProfile from './PublicProfile';
 import { getCurrentLocation } from '../utils/locationUtils';
 import type { IFrontendUser, IFrontendTask, ICreateTaskData, LocationData } from '../types';
 import NavBar from './NavBar';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<IFrontendTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,6 +35,8 @@ const Dashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
   const formRef = useRef<HTMLDivElement>(null);
 
   const fetchTasks = () => {
@@ -249,7 +254,7 @@ const Dashboard: React.FC = () => {
     setShowForm(true);
   };
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile((prevProfile: IFrontendUser | null) => {
       if (!prevProfile) {
         console.error("Attempted to update profile before it was loaded.");
@@ -285,11 +290,32 @@ const Dashboard: React.FC = () => {
     setProfileError('');
     
     try {
-      await updateUserProfile(userId, profile, token);
+      // Handle file upload first if a new file is selected
+      let updatedProfile = { ...profile };
+      if (profilePictureFile) {
+        const formData = new FormData();
+        formData.append('profilePicture', profilePictureFile);
+        
+        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/profile-picture`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          updatedProfile.profilePicture = uploadData.fileUrl;
+        }
+      }
+
+      await updateUserProfile(userId, updatedProfile, token);
       setProfileMessage('Profile updated successfully!');
       // Update localStorage with new values
-      if (profile.name) localStorage.setItem('userName', profile.name);
-      if (profile.email) localStorage.setItem('userEmail', profile.email);
+      if (updatedProfile.name) localStorage.setItem('userName', updatedProfile.name);
+      if (updatedProfile.email) localStorage.setItem('userEmail', updatedProfile.email);
+      
+      // Clear file upload state
+      setProfilePictureFile(null);
+      setProfilePicturePreview('');
     } catch (_err) {
       setProfileError('Failed to update profile.');
     } finally {
@@ -304,7 +330,7 @@ const Dashboard: React.FC = () => {
         onProfileToggle={() => setShowProfile(!showProfile)}
         showProfile={showProfile}
       />
-      <main className="max-w-4xl mx-auto my-10 p-4">
+      <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
       {!showProfile && (
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName')}</h1>
@@ -450,16 +476,26 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
                 <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
                 <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
-                {task.acceptedBy && task.acceptedBy.length > 0 && (
-                  <div className="mt-2">
-                    <b>Accepted By:</b>
-                    <ul className="list-disc pl-6">
-                      {task.acceptedBy.map((volunteer: IFrontendUser) => (
-                        <li key={volunteer._id}>{volunteer.name} ({volunteer.email})</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                                 {task.acceptedBy && task.acceptedBy.length > 0 && (
+                   <div className="mt-4">
+                     <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
+                     <div className="space-y-3">
+                       {task.acceptedBy.map((volunteer: IFrontendUser) => (
+                         <div key={volunteer._id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                           <PublicProfile
+                             userId={volunteer._id || ''}
+                             userName={volunteer.name || 'Unknown User'}
+                             userEmail={volunteer.email || ''}
+                             isClickable={true}
+                             onProfileClick={() => {
+                               navigate(`/profile/${volunteer._id}`);
+                             }}
+                           />
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )}
                 {(!task.acceptedCount || task.acceptedCount === 0) && (
                 <div className="flex space-x-2 mt-4">
                   <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
@@ -521,6 +557,48 @@ const Dashboard: React.FC = () => {
                    name="location" 
                    value={profile.location || ''} 
                    onChange={handleProfileChange} 
+                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                 />
+               </div>
+               <div>
+                 <label className="block font-medium text-gray-700 mb-1">Profile Picture:</label>
+                 <input 
+                   type="file" 
+                   name="profilePicture" 
+                   accept="image/*"
+                   onChange={e => {
+                     const file = e.target.files?.[0] || null;
+                     setProfilePictureFile(file);
+                     if (file) {
+                       const reader = new FileReader();
+                       reader.onload = (e) => {
+                         setProfilePicturePreview(e.target?.result as string);
+                       };
+                       reader.readAsDataURL(file);
+                     } else {
+                       setProfilePicturePreview('');
+                     }
+                   }}
+                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                 />
+                 {(profilePicturePreview || profile.profilePicture) && (
+                   <div className="mt-2">
+                     <img 
+                       src={profilePicturePreview || profile.profilePicture} 
+                       alt="Profile Preview" 
+                       className="w-20 h-20 object-cover rounded-lg border"
+                     />
+                   </div>
+                 )}
+               </div>
+               <div>
+                 <label className="block font-medium text-gray-700 mb-1">About:</label>
+                 <textarea 
+                   name="about" 
+                   value={profile.about || ''} 
+                   onChange={handleProfileChange} 
+                   rows={3}
+                   placeholder="Tell us about yourself..."
                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
                  />
                </div>

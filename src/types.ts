@@ -8,6 +8,8 @@ export interface IFrontendUser {
   role?: 'user' | 'volunteer';
   skills?: string;
   openToAnything?: boolean;
+  profilePicture?: string;
+  about?: string;
 }
 
 export interface ICreateTaskData {
@@ -55,6 +57,8 @@ export interface RegisterData {
   phone: string;
   password: string;
   location: string;
+  profilePicture?: string;
+  about?: string;
   role: 'user' | 'volunteer';
 }
 

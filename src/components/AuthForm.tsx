@@ -21,6 +21,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
   const [dob, setDob] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
+  const [about, setAbout] = useState('');
   const [passwordError, setPasswordError] = useState(''); // New state for password validation errors
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -60,6 +63,23 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     }
 
     try {
+      // Handle file upload first if a file is selected
+      let profilePictureUrl = '';
+      if (profilePicture) {
+        const formData = new FormData();
+        formData.append('profilePicture', profilePicture);
+        
+        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/profile-picture`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          profilePictureUrl = uploadData.fileUrl;
+        }
+      }
+
       const data: RegisterData = {
         name,
         dob,
@@ -67,6 +87,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
         phone,
         password,
         location,
+        profilePicture: profilePictureUrl,
+        about,
         role: isVolunteer ? 'volunteer' : 'user',
       };
       const res = await register(data);
@@ -133,6 +155,48 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
             <div>
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
               <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Profile Picture (Optional):</label>
+              <input 
+                type="file" 
+                name="profilePicture" 
+                accept="image/*"
+                onChange={e => {
+                  const file = e.target.files?.[0] || null;
+                  setProfilePicture(file);
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      setProfilePicturePreview(e.target?.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  } else {
+                    setProfilePicturePreview('');
+                  }
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+              />
+              {profilePicturePreview && (
+                <div className="mt-2">
+                  <img 
+                    src={profilePicturePreview} 
+                    alt="Preview" 
+                    className="w-20 h-20 object-cover rounded-lg border"
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">About (Optional):</label>
+              <textarea 
+                name="about" 
+                value={about} 
+                onChange={e => setAbout(e.target.value)} 
+                rows={3}
+                placeholder="Tell us about yourself..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+              />
             </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
           </form>

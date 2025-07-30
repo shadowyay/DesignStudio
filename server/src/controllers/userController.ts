@@ -6,6 +6,8 @@ interface IUserUpdate {
   phone?: string;
   location?: string;
   skills?: string;
+  profilePicture?: string;
+  about?: string;
 }
 
 export const getUserById = async (userId: string) => {
@@ -17,11 +19,11 @@ export const getUserById = async (userId: string) => {
 };
 
 export const updateUserProfile = async (userId: string, updateData: IUserUpdate) => {
-  const { name, email, phone, location, skills } = updateData;
+  const { name, email, phone, location, skills, profilePicture, about } = updateData;
   
   const updatedUser = await User.findByIdAndUpdate(
     userId,
-    { name, email, phone, location, skills },
+    { name, email, phone, location, skills, profilePicture, about },
     { new: true }
   ).select('-password');
 
