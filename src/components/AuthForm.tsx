@@ -21,10 +21,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
   const [dob, setDob] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
-  const [profilePicture, setProfilePicture] = useState<File | null>(null);
-  const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
   const [about, setAbout] = useState('');
   const [passwordError, setPasswordError] = useState(''); // New state for password validation errors
+  const [gender, setGender] = useState<'male' | 'female' | 'rather not say' | ''>('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,21 +62,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     }
 
     try {
-      // Handle file upload first if a file is selected
       let profilePictureUrl = '';
-      if (profilePicture) {
-        const formData = new FormData();
-        formData.append('profilePicture', profilePicture);
-        
-        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/profile-picture`, {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          profilePictureUrl = uploadData.fileUrl;
-        }
+      if (gender === 'male') {
+        profilePictureUrl = '/profile_pics/male.jpg';
+      } else if (gender === 'female') {
+        profilePictureUrl = '/profile_pics/female.jpg';
+      } else if (gender === 'rather not say') {
+        profilePictureUrl = '/profile_pics/rather_not_say.jpg';
       }
 
       const data: RegisterData = {
@@ -90,6 +81,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
         profilePicture: profilePictureUrl,
         about,
         role: isVolunteer ? 'volunteer' : 'user',
+        gender: gender || undefined,
       };
       const res = await register(data);
       if (res.message && res.message.includes('success')) {
@@ -147,6 +139,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
               <input type="tel" name="phone" pattern="[0-9]{10}" title="Enter a 10-digit number" value={phone} onChange={e => setPhone(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
+              <label className="block font-medium text-gray-700 mb-1">Gender:</label>
+              <select
+                name="gender"
+                value={gender}
+                onChange={e => setGender(e.target.value as 'male' | 'female' | 'rather not say')}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="rather not say">Rather not say</option>
+              </select>
+            </div>
+            <div>
               <label className="block font-medium text-gray-700 mb-1">Password:</label>
               <input type="password" name="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
               {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
@@ -155,37 +162,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
             <div>
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
               <input type="text" name="location" value={location} onChange={e => setLocation(e.target.value)} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
-            </div>
-            <div>
-              <label className="block font-medium text-gray-700 mb-1">Profile Picture (Optional):</label>
-              <input 
-                type="file" 
-                name="profilePicture" 
-                accept="image/*"
-                onChange={e => {
-                  const file = e.target.files?.[0] || null;
-                  setProfilePicture(file);
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                      setProfilePicturePreview(e.target?.result as string);
-                    };
-                    reader.readAsDataURL(file);
-                  } else {
-                    setProfilePicturePreview('');
-                  }
-                }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
-              />
-              {profilePicturePreview && (
-                <div className="mt-2">
-                  <img 
-                    src={profilePicturePreview} 
-                    alt="Preview" 
-                    className="w-20 h-20 object-cover rounded-lg border"
-                  />
-                </div>
-              )}
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">About (Optional):</label>

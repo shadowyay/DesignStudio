@@ -35,8 +35,6 @@ const Dashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
-  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
-  const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
   const formRef = useRef<HTMLDivElement>(null);
 
   const fetchTasks = () => {
@@ -254,17 +252,22 @@ const Dashboard: React.FC = () => {
     setShowForm(true);
   };
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setProfile((prevProfile: IFrontendUser | null) => {
-      if (!prevProfile) {
-        console.error("Attempted to update profile before it was loaded.");
-        return null;
-      }
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProfile(prevProfile => {
+      if (!prevProfile) return null;
 
-      const updatedProfile = {
-        ...prevProfile,
-        [e.target.name]: e.target.value,
-      } as IFrontendUser;
+      const updatedProfile = { ...prevProfile, [name]: value } as IFrontendUser;
+
+      if (name === 'gender') {
+        if (value === 'male') {
+          updatedProfile.profilePicture = '/profile_pics/male.jpg';
+        } else if (value === 'female') {
+          updatedProfile.profilePicture = '/profile_pics/female.jpg';
+        } else if (value === 'rather not say') {
+          updatedProfile.profilePicture = '/profile_pics/rather_not_say.jpg';
+        }
+      }
 
       return updatedProfile;
     });
@@ -290,32 +293,12 @@ const Dashboard: React.FC = () => {
     setProfileError('');
     
     try {
-      // Handle file upload first if a new file is selected
-      let updatedProfile = { ...profile };
-      if (profilePictureFile) {
-        const formData = new FormData();
-        formData.append('profilePicture', profilePictureFile);
-        
-        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/profile-picture`, {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          updatedProfile.profilePicture = uploadData.fileUrl;
-        }
-      }
-
-      await updateUserProfile(userId, updatedProfile, token);
+      await updateUserProfile(userId, profile, token);
       setProfileMessage('Profile updated successfully!');
       // Update localStorage with new values
-      if (updatedProfile.name) localStorage.setItem('userName', updatedProfile.name);
-      if (updatedProfile.email) localStorage.setItem('userEmail', updatedProfile.email);
+      if (profile.name) localStorage.setItem('userName', profile.name);
+      if (profile.email) localStorage.setItem('userEmail', profile.email);
       
-      // Clear file upload state
-      setProfilePictureFile(null);
-      setProfilePicturePreview('');
     } catch (_err) {
       setProfileError('Failed to update profile.');
     } finally {
@@ -550,6 +533,20 @@ const Dashboard: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
                 />
               </div>
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Gender:</label>
+                <select
+                  name="gender"
+                  value={profile.gender || ''}
+                  onChange={handleProfileChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="rather not say">Rather not say</option>
+                </select>
+              </div>
                              <div>
                  <label className="block font-medium text-gray-700 mb-1">Location:</label>
                  <input 
@@ -562,29 +559,10 @@ const Dashboard: React.FC = () => {
                </div>
                <div>
                  <label className="block font-medium text-gray-700 mb-1">Profile Picture:</label>
-                 <input 
-                   type="file" 
-                   name="profilePicture" 
-                   accept="image/*"
-                   onChange={e => {
-                     const file = e.target.files?.[0] || null;
-                     setProfilePictureFile(file);
-                     if (file) {
-                       const reader = new FileReader();
-                       reader.onload = (e) => {
-                         setProfilePicturePreview(e.target?.result as string);
-                       };
-                       reader.readAsDataURL(file);
-                     } else {
-                       setProfilePicturePreview('');
-                     }
-                   }}
-                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
-                 />
-                 {(profilePicturePreview || profile.profilePicture) && (
+                 {profile.profilePicture && (
                    <div className="mt-2">
                      <img 
-                       src={profilePicturePreview || profile.profilePicture} 
+                       src={profile.profilePicture} 
                        alt="Profile Preview" 
                        className="w-20 h-20 object-cover rounded-lg border"
                      />

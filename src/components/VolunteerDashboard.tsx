@@ -19,8 +19,6 @@ const VolunteerDashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
-  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
-  const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
 
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token'); // Retrieve token here
@@ -96,19 +94,22 @@ const VolunteerDashboard: React.FC = () => {
     setAccepting(null);
   };
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setProfile((prevProfile: IFrontendUser | null) => {
-      // If prevProfile is null, it means profile data hasn't loaded or an error occurred.
-      // We should not attempt to update it in this state.
-      if (!prevProfile) {
-        console.error("Attempted to update profile before it was loaded.");
-        return null; // Do not update state if prevProfile is null
-      }
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProfile(prevProfile => {
+      if (!prevProfile) return null;
 
-      const updatedProfile = {
-        ...prevProfile,
-        [e.target.name]: e.target.value,
-      } as IFrontendUser; // Assert the type to ensure all IFrontendUser properties are considered
+      const updatedProfile = { ...prevProfile, [name]: value } as IFrontendUser;
+
+      if (name === 'gender') {
+        if (value === 'male') {
+          updatedProfile.profilePicture = '/profile_pics/male.jpg';
+        } else if (value === 'female') {
+          updatedProfile.profilePicture = '/profile_pics/female.jpg';
+        } else if (value === 'rather not say') {
+          updatedProfile.profilePicture = '/profile_pics/rather_not_say.jpg';
+        }
+      }
 
       return updatedProfile;
     });
@@ -130,29 +131,9 @@ const VolunteerDashboard: React.FC = () => {
         setProfileLoading(false);
         return;
       }
-      // Handle file upload first if a new file is selected
-      let updatedProfile = { ...profile };
-      if (profilePictureFile) {
-        const formData = new FormData();
-        formData.append('profilePicture', profilePictureFile);
-        
-        const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/profile-picture`, {
-          method: 'POST',
-          body: formData
-        });
-        
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          updatedProfile.profilePicture = uploadData.fileUrl;
-        }
-      }
-
-      await updateUserProfile(userId, updatedProfile, token); // Pass token
+      await updateUserProfile(userId, profile, token); // Pass token
       setProfileMessage('Profile updated successfully!');
       
-      // Clear file upload state
-      setProfilePictureFile(null);
-      setProfilePicturePreview('');
     } catch (_err) {
       setProfileError('Failed to update profile.');
     } finally {
@@ -202,27 +183,22 @@ const VolunteerDashboard: React.FC = () => {
                     return (
                       <>
                         <p className="text-green-600 font-bold">You have accepted this task!</p>
-                                                 {/* Display the full list of accepted volunteers only if the current user has accepted it */}
-                         {task.acceptedBy && task.acceptedBy.length > 0 && (
-                           <div className="mt-4">
-                             <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
-                             <div className="space-y-3">
-                               {task.acceptedBy.map((vol: IFrontendUser) => (
-                                 <div key={vol._id} className="border border-gray-200 rounded-lg p-3 bg-white">
-                                   <PublicProfile
-                                     userId={vol._id || ''}
-                                     userName={vol.name || 'Unknown User'}
-                                     userEmail={vol.email || ''}
-                                     isClickable={true}
-                                                                        onProfileClick={() => {
-                                     navigate(`/profile/${vol._id}`);
-                                   }}
-                                   />
-                                 </div>
-                               ))}
-                             </div>
-                           </div>
-                         )}
+                        {task.createdBy && (
+                          <div className="mt-4">
+                            <b className="text-gray-700 mb-2 block">Task Created By:</b>
+                            <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                              <PublicProfile
+                                userId={task.createdBy._id || ''}
+                                userName={task.createdBy.name || 'Unknown User'}
+                                userEmail={task.createdBy.email || ''}
+                                isClickable={true}
+                                onProfileClick={() => {
+                                  navigate(`/profile/${task.createdBy._id}`);
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </>
                     );
                   } else if (task.isFull) {
@@ -260,6 +236,20 @@ const VolunteerDashboard: React.FC = () => {
               <input type="tel" name="phone" value={profile?.phone || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
+                <label className="block font-medium text-gray-700 mb-1">Gender:</label>
+                <select
+                  name="gender"
+                  value={profile?.gender || ''}
+                  onChange={handleProfileChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="rather not say">Rather not say</option>
+                </select>
+              </div>
+            <div>
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
               <input type="text" name="location" value={profile?.location || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
@@ -269,29 +259,10 @@ const VolunteerDashboard: React.FC = () => {
              </div>
              <div>
                <label className="block font-medium text-gray-700 mb-1">Profile Picture:</label>
-               <input 
-                 type="file" 
-                 name="profilePicture" 
-                 accept="image/*"
-                 onChange={e => {
-                   const file = e.target.files?.[0] || null;
-                   setProfilePictureFile(file);
-                   if (file) {
-                     const reader = new FileReader();
-                     reader.onload = (e) => {
-                       setProfilePicturePreview(e.target?.result as string);
-                     };
-                     reader.readAsDataURL(file);
-                   } else {
-                     setProfilePicturePreview('');
-                   }
-                 }}
-                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
-               />
-               {(profilePicturePreview || profile?.profilePicture) && (
+               {profile?.profilePicture && (
                  <div className="mt-2">
                    <img 
-                     src={profilePicturePreview || profile?.profilePicture} 
+                     src={profile.profilePicture} 
                      alt="Profile Preview" 
                      className="w-20 h-20 object-cover rounded-lg border"
                    />

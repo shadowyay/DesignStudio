@@ -10,6 +10,7 @@ export interface IFrontendUser {
   openToAnything?: boolean;
   profilePicture?: string;
   about?: string;
+  gender?: 'male' | 'female' | 'rather not say';
 }
 
 export interface ICreateTaskData {
@@ -60,6 +61,7 @@ export interface RegisterData {
   profilePicture?: string;
   about?: string;
   role: 'user' | 'volunteer';
+  gender?: 'male' | 'female' | 'rather not say';
 }
 
 export interface LocationData {

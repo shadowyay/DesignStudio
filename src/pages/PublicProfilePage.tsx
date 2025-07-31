@@ -181,6 +181,17 @@ const PublicProfilePage: React.FC = () => {
               </div>
             )}
 
+            {/* Gender Information */}
+            {profile.gender && (
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Gender</h3>
+                <div className="flex items-center space-x-3">
+                  <span className="text-gray-500 text-xl">👤</span>
+                  <span className="text-gray-600 capitalize">{profile.gender}</span>
+                </div>
+              </div>
+            )}
+
             {/* Skills/Interests */}
             {profile.skills && (
               <div className="mb-8">

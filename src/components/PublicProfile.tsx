@@ -8,6 +8,7 @@ interface PublicProfileProps {
   userEmail: string;
   isClickable?: boolean;
   onProfileClick?: () => void;
+  userGender?: 'male' | 'female' | 'rather not say';
 }
 
 const PublicProfile: React.FC<PublicProfileProps> = ({ 
@@ -15,7 +16,8 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
   userName, 
   userEmail, 
   isClickable = false,
-  onProfileClick 
+  onProfileClick,
+  userGender
 }) => {
   const [profile, setProfile] = useState<IFrontendUser | null>(null);
   const [loading, setLoading] = useState(false);
@@ -93,6 +95,9 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
           {userName}
         </div>
         <div className="text-sm text-gray-500">{userEmail}</div>
+        {userGender && (
+          <div className="text-sm text-gray-500 capitalize">{userGender}</div>
+        )}
         {profile?.about && (
           <div className="text-sm text-gray-600 mt-1">{profile.about}</div>
         )}

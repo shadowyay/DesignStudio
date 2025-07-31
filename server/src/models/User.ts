@@ -12,6 +12,7 @@ export interface IUser extends Document {
   openToAnything?: boolean;
   profilePicture?: string;
   about?: string;
+  gender: 'male' | 'female' | 'rather not say';
 }
 
 const UserSchema: Schema = new Schema({
@@ -21,11 +22,12 @@ const UserSchema: Schema = new Schema({
   phone: { type: String, required: true },
   dob: { type: Date, required: true },
   location: { type: String, required: true },
-  role: { type: String, enum: ['user', 'volunteer'], required: true },
+  role: { type: String, enum: ['user', 'volunteer'], default: 'user' },
   skills: { type: String },
-  openToAnything: { type: Boolean },
+  openToAnything: { type: Boolean, default: false },
   profilePicture: { type: String },
-  about: { type: String }
+  about: { type: String },
+  gender: { type: String, enum: ['male', 'female', 'rather not say'] }
 });
 
 export default mongoose.model<IUser>('User', UserSchema);
