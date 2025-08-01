@@ -12,7 +12,10 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://design-lyart-kappa.vercel.app', 'https://design-bomj.onrender.com'] // Allow requests from your Vercel and Render frontends
+  origin: true, // Allow all origins for now to debug the issue
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 

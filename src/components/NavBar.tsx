@@ -14,7 +14,6 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [userProfile, setUserProfile] = useState<IFrontendUser | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
   const navigate = useNavigate();
   
   const userName = localStorage.getItem('userName') || 'User';
@@ -26,7 +25,6 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
     const fetchUserProfile = async () => {
       if (!userId) return;
       
-      setProfileLoading(true);
       try {
         const token = localStorage.getItem('token');
         if (token) {
@@ -37,8 +35,6 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
         }
       } catch (error) {
         console.error('Failed to fetch user profile:', error);
-      } finally {
-        setProfileLoading(false);
       }
     };
 
@@ -92,7 +88,7 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
           src={imageUrl} 
           alt={userName}
           className="w-8 h-8 rounded-full object-cover"
-          onError={(e) => {
+          onError={() => {
             console.error('Profile picture failed to load in NavBar:', imageUrl);
           }}
         />

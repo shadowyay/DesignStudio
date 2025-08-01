@@ -512,7 +512,7 @@ const Dashboard: React.FC = () => {
                       src={`/${profile.profilePicture.replace(/^\//, '')}`}
                       alt="Profile Preview" 
                       className="w-24 h-24 object-cover rounded-full border-4 border-blue-200 shadow-lg"
-                      onError={(e) => {
+                      onError={() => {
                         console.error('Profile picture failed to load:', profile.profilePicture);
                       }}
                     />
