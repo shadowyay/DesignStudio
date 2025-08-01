@@ -12,7 +12,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://design-lyart-kappa.vercel.app', 'https://design-bomj.onrender.com'] // Allow requests from your Vercel and Render frontends
+  origin: ['http://localhost:5173', 'https://design-lyart-kappa.vercel.app', 'https://design-6vfm.vercel.app', 'https://design-bomj.onrender.com'] // Allow requests from your Vercel and Render frontends
 }));
 app.use(express.json());
 
