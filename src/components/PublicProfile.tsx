@@ -80,7 +80,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
           src={imageUrl} 
           alt={userName}
           className="w-12 h-12 rounded-full object-cover"
-          onError={(e) => {
+          onError={() => {
             console.error('Image failed to load in PublicProfile:', imageUrl);
           }}
         />
