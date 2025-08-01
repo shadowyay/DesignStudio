@@ -5,14 +5,14 @@ import fs from 'fs';
 
 // Extend Express Request to include file property
 interface MulterRequest extends Request {
-  file?: any;
+  file?: Express.Multer.File;
 }
 
 const router = express.Router();
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: (req: Request, file: any, cb: (error: Error | null, destination: string) => void) => {
+  destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
     const uploadDir = path.join(__dirname, '../../uploads');
     // Create uploads directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     }
     cb(null, uploadDir);
   },
-  filename: (req: Request, file: any, cb: (error: Error | null, filename: string) => void) => {
+  filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     // Generate unique filename with timestamp
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
@@ -29,11 +29,11 @@ const storage = multer.diskStorage({
 });
 
 // File filter to only allow images
-const fileFilter = (req: Request, file: any, cb: any) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(null, false);
   }
 };
 
@@ -67,7 +67,7 @@ router.post('/profile-picture', upload.single('profilePicture'), (req: MulterReq
 });
 
 // Error handling middleware for multer
-router.use((error: any, req: Request, res: Response, _next: NextFunction) => {
+router.use((error: Error, req: Request, res: Response, _next: NextFunction) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ message: 'File too large. Maximum size is 5MB.' });
