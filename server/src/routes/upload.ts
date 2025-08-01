@@ -1,13 +1,18 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+
+// Extend Express Request to include file property
+interface MulterRequest extends Request {
+  file?: any;
+}
 
 const router = express.Router();
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (req: Request, file: any, cb: (error: Error | null, destination: string) => void) => {
     const uploadDir = path.join(__dirname, '../../uploads');
     // Create uploads directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
@@ -15,7 +20,7 @@ const storage = multer.diskStorage({
     }
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
+  filename: (req: Request, file: any, cb: (error: Error | null, filename: string) => void) => {
     // Generate unique filename with timestamp
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
@@ -24,7 +29,7 @@ const storage = multer.diskStorage({
 });
 
 // File filter to only allow images
-const fileFilter = (req: any, file: any, cb: any) => {
+const fileFilter = (req: Request, file: any, cb: any) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
@@ -41,7 +46,7 @@ const upload = multer({
 });
 
 // Upload profile picture
-router.post('/profile-picture', upload.single('profilePicture'), (req, res) => {
+router.post('/profile-picture', upload.single('profilePicture'), (req: MulterRequest, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -62,7 +67,7 @@ router.post('/profile-picture', upload.single('profilePicture'), (req, res) => {
 });
 
 // Error handling middleware for multer
-router.use((error: any, req: any, res: any, next: any) => {
+router.use((error: any, req: Request, res: Response, _next: NextFunction) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ message: 'File too large. Maximum size is 5MB.' });
