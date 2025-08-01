@@ -103,11 +103,11 @@ const VolunteerDashboard: React.FC = () => {
 
       if (name === 'gender') {
         if (value === 'male') {
-          updatedProfile.profilePicture = '/profile_pics/male.jpg';
+          updatedProfile.profilePicture = 'profile_pics/male.jpg';
         } else if (value === 'female') {
-          updatedProfile.profilePicture = '/profile_pics/female.jpg';
+          updatedProfile.profilePicture = 'profile_pics/female.jpg';
         } else if (value === 'rather not say') {
-          updatedProfile.profilePicture = '/profile_pics/rather_not_say.jpg';
+          updatedProfile.profilePicture = 'profile_pics/rather_not_say.jpg';
         }
       }
 

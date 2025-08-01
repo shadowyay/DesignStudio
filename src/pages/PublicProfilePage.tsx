@@ -27,6 +27,8 @@ const PublicProfilePage: React.FC = () => {
         }
         const data = await getUserProfile(userId, token);
         if (data && data._id) {
+          console.log('Profile data received:', data);
+          console.log('Profile picture URL:', data.profilePicture);
           setProfile(data);
         } else {
           setError('Failed to load profile');
@@ -52,15 +54,33 @@ const PublicProfilePage: React.FC = () => {
 
   const getProfilePicture = () => {
     if (profile?.profilePicture) {
+      // Ensure the URL is correctly formed for deployment
+      let imageUrl = profile.profilePicture;
+      
+      // If it's not an absolute URL, make it relative to the public directory
+      if (!profile.profilePicture.startsWith('http')) {
+        // Remove leading slash if present and ensure it's relative to public
+        const cleanPath = profile.profilePicture.replace(/^\//, '');
+        imageUrl = `/${cleanPath}`;
+      }
+      
+      console.log('Original profile picture:', profile.profilePicture);
+      console.log('Constructed image URL:', imageUrl);
+
       return (
         <img 
-          src={profile.profilePicture} 
+          src={imageUrl} 
           alt={profile.name}
           className="w-32 h-32 rounded-full object-cover mx-auto shadow-lg"
+          onError={(e) => {
+            console.error('Image failed to load:', imageUrl);
+            console.error('Error event:', e);
+          }}
         />
       );
     }
     
+    console.log('No profile picture found, showing initials');
     return (
       <div className="w-32 h-32 bg-blue-600 rounded-full flex items-center justify-center mx-auto shadow-lg">
         <span className="text-white font-semibold text-3xl">

@@ -64,11 +64,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     try {
       let profilePictureUrl = '';
       if (gender === 'male') {
-        profilePictureUrl = '/profile_pics/male.jpg';
+        profilePictureUrl = 'profile_pics/male.jpg';
       } else if (gender === 'female') {
-        profilePictureUrl = '/profile_pics/female.jpg';
+        profilePictureUrl = 'profile_pics/female.jpg';
       } else if (gender === 'rather not say') {
-        profilePictureUrl = '/profile_pics/rather_not_say.jpg';
+        profilePictureUrl = 'profile_pics/rather_not_say.jpg';
       }
 
       const data: RegisterData = {

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getUserProfile } from '../api';
+import type { IFrontendUser } from '../types';
 
 interface NavBarProps {
   userType: 'user' | 'volunteer';
@@ -11,10 +13,37 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [userProfile, setUserProfile] = useState<IFrontendUser | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const navigate = useNavigate();
   
   const userName = localStorage.getItem('userName') || 'User';
   const userEmail = localStorage.getItem('userEmail') || '';
+  const userId = localStorage.getItem('userId');
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!userId) return;
+      
+      setProfileLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const data = await getUserProfile(userId, token);
+          if (data && data._id) {
+            setUserProfile(data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,6 +76,38 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
     setShowProfileMenu(!showProfileMenu);
   };
 
+  const getProfilePicture = () => {
+    if (userProfile?.profilePicture) {
+      let imageUrl = userProfile.profilePicture;
+      
+      // If it's not an absolute URL, make it relative to the public directory
+      if (!userProfile.profilePicture.startsWith('http')) {
+        // Remove leading slash if present and ensure it's relative to public
+        const cleanPath = userProfile.profilePicture.replace(/^\//, '');
+        imageUrl = `/${cleanPath}`;
+      }
+
+      return (
+        <img 
+          src={imageUrl} 
+          alt={userName}
+          className="w-8 h-8 rounded-full object-cover"
+          onError={(e) => {
+            console.error('Profile picture failed to load in NavBar:', imageUrl);
+          }}
+        />
+      );
+    }
+    
+    return (
+      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+        <span className="text-white font-semibold text-sm">
+          {userName.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <nav className={`bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
@@ -72,11 +133,7 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
               onClick={handleProfileClick}
               className="flex items-center space-x-3 bg-gray-50 hover:bg-gray-100 rounded-lg px-4 py-2 transition-colors duration-200"
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
-                  {userName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              {getProfilePicture()}
               <div className="text-left">
                 <p className="text-sm font-medium text-gray-900">{userName}</p>
                 <p className="text-xs text-gray-500">{userEmail}</p>
@@ -97,8 +154,13 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
             {showProfileMenu && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900 mb-1">{userName}</p>
-                  <p className="text-xs text-gray-500 break-all">{userEmail}</p>
+                  <div className="flex items-center space-x-3">
+                    {getProfilePicture()}
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 mb-1">{userName}</p>
+                      <p className="text-xs text-gray-500 break-all">{userEmail}</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="py-1">
                   <button

@@ -261,11 +261,11 @@ const Dashboard: React.FC = () => {
 
       if (name === 'gender') {
         if (value === 'male') {
-          updatedProfile.profilePicture = '/profile_pics/male.jpg';
+          updatedProfile.profilePicture = 'profile_pics/male.jpg';
         } else if (value === 'female') {
-          updatedProfile.profilePicture = '/profile_pics/female.jpg';
+          updatedProfile.profilePicture = 'profile_pics/female.jpg';
         } else if (value === 'rather not say') {
-          updatedProfile.profilePicture = '/profile_pics/rather_not_say.jpg';
+          updatedProfile.profilePicture = 'profile_pics/rather_not_say.jpg';
         }
       }
 
@@ -503,6 +503,29 @@ const Dashboard: React.FC = () => {
           
           {profile ? (
             <form onSubmit={handleProfileSubmit} className="space-y-4">
+              {/* Profile Picture Section - Moved to top */}
+              <div className="text-center mb-6">
+                <label className="block font-medium text-gray-700 mb-3">Profile Picture:</label>
+                {profile.profilePicture ? (
+                  <div className="flex justify-center">
+                    <img 
+                      src={`/${profile.profilePicture.replace(/^\//, '')}`}
+                      alt="Profile Preview" 
+                      className="w-24 h-24 object-cover rounded-full border-4 border-blue-200 shadow-lg"
+                      onError={(e) => {
+                        console.error('Profile picture failed to load:', profile.profilePicture);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mx-auto border-4 border-blue-200 shadow-lg">
+                    <span className="text-white font-semibold text-2xl">
+                      {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
               <div>
                 <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
                 <input 
@@ -547,46 +570,34 @@ const Dashboard: React.FC = () => {
                   <option value="rather not say">Rather not say</option>
                 </select>
               </div>
-                             <div>
-                 <label className="block font-medium text-gray-700 mb-1">Location:</label>
-                 <input 
-                   type="text" 
-                   name="location" 
-                   value={profile.location || ''} 
-                   onChange={handleProfileChange} 
-                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
-                 />
-               </div>
-               <div>
-                 <label className="block font-medium text-gray-700 mb-1">Profile Picture:</label>
-                 {profile.profilePicture && (
-                   <div className="mt-2">
-                     <img 
-                       src={profile.profilePicture} 
-                       alt="Profile Preview" 
-                       className="w-20 h-20 object-cover rounded-lg border"
-                     />
-                   </div>
-                 )}
-               </div>
-               <div>
-                 <label className="block font-medium text-gray-700 mb-1">About:</label>
-                 <textarea 
-                   name="about" 
-                   value={profile.about || ''} 
-                   onChange={handleProfileChange} 
-                   rows={3}
-                   placeholder="Tell us about yourself..."
-                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
-                 />
-               </div>
-               <button 
-                 type="submit" 
-                 className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" 
-                 disabled={profileLoading}
-               >
-                 {profileLoading ? 'Updating...' : 'Update Profile'}
-               </button>
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Location:</label>
+                <input 
+                  type="text" 
+                  name="location" 
+                  value={profile.location || ''} 
+                  onChange={handleProfileChange} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                />
+              </div>
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">About:</label>
+                <textarea 
+                  name="about" 
+                  value={profile.about || ''} 
+                  onChange={handleProfileChange} 
+                  rows={3}
+                  placeholder="Tell us about yourself..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" 
+                disabled={profileLoading}
+              >
+                {profileLoading ? 'Updating...' : 'Update Profile'}
+              </button>
             </form>
           ) : (
                          <div className="space-y-4">

@@ -66,11 +66,23 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
 
   const getProfilePicture = () => {
     if (profile?.profilePicture) {
+      let imageUrl = profile.profilePicture;
+      
+      // If it's not an absolute URL, make it relative to the public directory
+      if (!profile.profilePicture.startsWith('http')) {
+        // Remove leading slash if present and ensure it's relative to public
+        const cleanPath = profile.profilePicture.replace(/^\//, '');
+        imageUrl = `/${cleanPath}`;
+      }
+
       return (
         <img 
-          src={profile.profilePicture} 
+          src={imageUrl} 
           alt={userName}
           className="w-12 h-12 rounded-full object-cover"
+          onError={(e) => {
+            console.error('Image failed to load in PublicProfile:', imageUrl);
+          }}
         />
       );
     }
