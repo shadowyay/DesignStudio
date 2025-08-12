@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createTask, getTasks, deleteTask, getUserProfile, updateUserProfile } from '../api';
+import { createTask, getTasksByUser, deleteTask, getUserProfile, updateUserProfile, updateTask } from '../api';
 import LocationMap from './LocationMap';
 import LocationPicker from './LocationPicker';
 import AddressDisplay from './AddressDisplay';
@@ -39,7 +39,14 @@ const Dashboard: React.FC = () => {
 
   const fetchTasks = () => {
     setLoading(true);
-    getTasks()
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      setError('User ID not found. Please log in again.');
+      setLoading(false);
+      return;
+    }
+    
+    getTasksByUser(userId)
       .then((res: IFrontendTask[]) => setTasks(Array.isArray(res) ? res : []))
       .catch((_err) => setError('Failed to fetch tasks'))
       .finally(() => setLoading(false));
@@ -214,8 +221,8 @@ const Dashboard: React.FC = () => {
         setLoading(false);
         return;
       }
-      // Assuming createTask can handle updates if _id is present
-      const res = await createTask(editingTask, token);
+      
+      const res = await updateTask(editingTask._id, editingTask, token);
       if (res._id) {
         fetchTasks();
         setEditingTask(null);

@@ -13,6 +13,7 @@ export interface IUser extends Document {
   profilePicture?: string;
   about?: string;
   gender: 'male' | 'female' | 'rather not say';
+  aadhaar?: string; // Made optional to handle existing users
 }
 
 const UserSchema: Schema = new Schema({
@@ -27,7 +28,8 @@ const UserSchema: Schema = new Schema({
   openToAnything: { type: Boolean, default: false },
   profilePicture: { type: String },
   about: { type: String },
-  gender: { type: String, enum: ['male', 'female', 'rather not say'] }
+  gender: { type: String, enum: ['male', 'female', 'rather not say'] },
+  aadhaar: { type: String, unique: true, sparse: true } // Made optional and added sparse index for unique constraint
 });
 
 export default mongoose.model<IUser>('User', UserSchema);

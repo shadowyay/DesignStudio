@@ -24,6 +24,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
   const [about, setAbout] = useState('');
   const [passwordError, setPasswordError] = useState(''); // New state for password validation errors
   const [gender, setGender] = useState<'male' | 'female' | 'rather not say' | ''>('');
+  const [aadhaar, setAadhaar] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +83,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
         about,
         role: isVolunteer ? 'volunteer' : 'user',
         gender: gender || undefined,
+        aadhaar,
       };
       const res = await register(data);
       if (res.message && res.message.includes('success')) {
@@ -173,6 +175,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
                 placeholder="Tell us about yourself..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
               />
+            </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Aadhaar Number (Optional):</label>
+              <input 
+                type="text" 
+                name="aadhaar" 
+                pattern="[0-9]{12}" 
+                title="Enter a 12-digit Aadhaar number" 
+                value={aadhaar} 
+                onChange={e => setAadhaar(e.target.value)} 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                placeholder="123456789012"
+              />
+              <small className="text-gray-500 block mt-1">Enter your 12-digit Aadhaar number (optional for now)</small>
             </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
           </form>

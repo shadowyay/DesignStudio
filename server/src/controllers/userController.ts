@@ -9,6 +9,7 @@ interface IUserUpdate {
   profilePicture?: string;
   about?: string;
   gender?: 'male' | 'female' | 'rather not say';
+  // Note: aadhaar is not included here as it should not be updatable
 }
 
 export const getUserById = async (userId: string) => {

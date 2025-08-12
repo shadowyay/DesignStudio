@@ -23,32 +23,56 @@ const VolunteerDashboard: React.FC = () => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token'); // Retrieve token here
 
-  useEffect(() => {
+  const refreshTasks = () => {
     if (!showProfile) {
       setLoading(true);
       getTasks()
         .then((res: IFrontendTask[]) => {
-          const filteredTasks = Array.isArray(res) ? res.filter((task: IFrontendTask) => {
-            const isAcceptedByAnyone = task.acceptedBy && task.acceptedBy.length > 0;
-            const currentUserAccepted = isAcceptedByAnyone && userId && task.acceptedBy?.some((vol: IFrontendUser) => vol._id === userId);
-            // Show task if no one has accepted it OR if the current user has accepted it
-            return !isAcceptedByAnyone || currentUserAccepted;
-          }) : [];
-          setTasks(filteredTasks);
-          setError('');
+          if (Array.isArray(res)) {
+            // Filter tasks: show available tasks + tasks accepted by current volunteer
+            const filteredTasks = res.filter((task: IFrontendTask) => {
+              // Skip tasks that are full (all volunteers accepted)
+              if (task.isFull) return false;
+              
+              // Show tasks that haven't been accepted by anyone
+              if (!task.acceptedBy || task.acceptedBy.length === 0) return true;
+              
+              // Show tasks that the current volunteer has accepted
+              if (userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId)) return true;
+              
+              // Don't show tasks accepted by other volunteers (unless current user also accepted)
+              return false;
+            });
+            
+            setTasks(filteredTasks);
+            setError('');
+          } else {
+            setTasks([]);
+            setError('Invalid response format from server');
+          }
         })
-        .catch((_err) => setError('Failed to load tasks'))
+        .catch((_err) => {
+          setError('Failed to load tasks');
+          setTasks([]);
+        })
         .finally(() => setLoading(false));
-    } else if (userId) {
+    }
+  };
+
+  useEffect(() => {
+    refreshTasks();
+    
+    // Load profile if profile section is shown
+    if (showProfile && userId) {
       setProfileLoading(true);
       if (!token) {
         setProfileError('Authentication token not found. Please log in again.');
         setProfileLoading(false);
         return;
       }
-      getUserProfile(userId, token) // Pass token
+      getUserProfile(userId, token)
         .then((data) => {
-          if (data && data._id) { // Ensure data and _id exist before setting profile
+          if (data && data._id) {
             setProfile(data);
             setProfileError('');
           } else {
@@ -58,7 +82,7 @@ const VolunteerDashboard: React.FC = () => {
         .catch((_err) => setProfileError('Failed to load profile'))
         .finally(() => setProfileLoading(false));
     }
-  }, [showProfile, userId, token]); 
+  }, [showProfile, userId, token]);
 
   const handleAccept = async (taskId: string) => {
     if (!userId) {
@@ -73,18 +97,14 @@ const VolunteerDashboard: React.FC = () => {
         setAccepting(null);
         return;
       }
-      const result = await acceptTask(taskId, userId, token); // Pass token
+      const result = await acceptTask(taskId, userId, token);
       if (result.success) {
-        setMessage('Task accepted!');
-        // Find the task in the current state and update it with the new data from the server.
-        setTasks(prevTasks => {
-          const newTasks = [...prevTasks];
-          const taskIndex = newTasks.findIndex(t => t._id === taskId);
-          if (taskIndex !== -1) {
-            newTasks[taskIndex] = result.task;
-          }
-          return newTasks;
-        });
+        setMessage('Task accepted successfully!');
+        // Refresh tasks to show updated status
+        setTimeout(() => {
+          refreshTasks();
+          setMessage('');
+        }, 2000);
       } else {
         setMessage(result.message || 'Could not accept task.');
       }
@@ -151,6 +171,13 @@ const VolunteerDashboard: React.FC = () => {
       <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName') || 'Volunteer'}</h1>
+        <button
+          onClick={refreshTasks}
+          disabled={loading}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Refreshing...' : '🔄 Refresh Tasks'}
+        </button>
       </div>
       {!showProfile ? (
         <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
@@ -159,33 +186,77 @@ const VolunteerDashboard: React.FC = () => {
           {loading ? <p className="text-gray-500">Loading tasks...</p> : null}
           {error && <p className="text-red-500 mt-2">{error}</p>}
           {message && <p className={`mt-2 font-semibold ${message.includes('accepted') ? 'text-green-600' : 'text-red-500'}`}>{message}</p>}
+          
+          {/* Task Summary */}
+          {!loading && tasks.length > 0 && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                Showing {tasks.length} task{tasks.length !== 1 ? 's' : ''} - 
+                Available to accept or already accepted by you
+              </p>
+            </div>
+          )}
+          
           <div id="taskList" className="space-y-4 mt-6">
-            {tasks.length === 0 && !loading ? <p className="text-gray-500">No tasks available.</p> : null}
+            {tasks.length === 0 && !loading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">No tasks available at the moment.</p>
+                <p className="text-gray-400 text-sm mt-2">Check back later for new volunteer opportunities!</p>
+              </div>
+            ) : null}
             {tasks.map(task => (
               <div key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
-                <h3 className="text-lg font-bold text-blue-700 mb-1">{task.title}</h3>
-                <p className="text-gray-700 mb-1">{task.description}</p>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-bold text-blue-700">{task.title}</h3>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    task.urgency === 'Emergency' ? 'bg-red-100 text-red-800' :
+                    task.urgency === 'Urgent' ? 'bg-orange-100 text-orange-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {task.urgency}
+                  </span>
+                </div>
+                <p className="text-gray-700 mb-3">{task.description}</p>
+                
                 <AddressDisplay
                   address={task.location?.address}
                   lat={task.location?.lat}
                   lng={task.location?.lng}
                 />
-                <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
-                {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
-                <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
-                <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
-                <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
-                {/* Determine if the current user has accepted this task */}
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                  <div>
+                    <span className="text-gray-500">Start Time:</span>
+                    <p className="text-gray-700">{task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                  </div>
+                  {task.endTime && (
+                    <div>
+                      <span className="text-gray-500">End Time:</span>
+                      <p className="text-gray-700">{new Date(task.endTime).toLocaleString()}</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-gray-500">Volunteers:</span>
+                    <p className="text-gray-700">{task.acceptedCount || 0} / {task.peopleNeeded}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Amount:</span>
+                    <p className="text-gray-700">₹{task.amount?.toFixed(2) || '0.00'}</p>
+                  </div>
+                </div>
+                
+                {/* Task Status and Actions */}
                 {(() => {
                   const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId);
+                  const availableSpots = (task.peopleNeeded || 0) - (task.acceptedCount || 0);
 
                   if (currentUserAccepted) {
                     return (
-                      <>
-                        <p className="text-green-600 font-bold">You have accepted this task!</p>
+                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-green-700 font-bold mb-2">✅ You have accepted this task!</p>
                         {task.createdBy && (
-                          <div className="mt-4">
-                            <b className="text-gray-700 mb-2 block">Task Created By:</b>
+                          <div>
+                            <p className="text-sm text-gray-600 mb-2">Task Created By:</p>
                             <div className="border border-gray-200 rounded-lg p-3 bg-white">
                               <PublicProfile
                                 userId={task.createdBy._id || ''}
@@ -199,15 +270,30 @@ const VolunteerDashboard: React.FC = () => {
                             </div>
                           </div>
                         )}
-                      </>
+                      </div>
                     );
-                  } else if (task.isFull) {
-                    return <span className="text-green-600 font-bold">All volunteers accepted</span>;
+                  } else if (availableSpots <= 0) {
+                    return (
+                      <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span className="text-gray-600 font-medium">Task is full - All volunteers accepted</span>
+                      </div>
+                    );
                   } else {
                     return (
-                      <button className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition mt-2" onClick={() => handleAccept(task._id)} disabled={accepting === task._id}>
-                        {accepting === task._id ? 'Accepting...' : 'Accept Task'}
-                      </button>
+                      <div className="mt-4">
+                        <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-700">
+                            <span className="font-medium">{availableSpots}</span> spot{availableSpots !== 1 ? 's' : ''} still available
+                          </p>
+                        </div>
+                        <button 
+                          className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                          onClick={() => handleAccept(task._id)} 
+                          disabled={accepting === task._id}
+                        >
+                          {accepting === task._id ? 'Accepting...' : 'Accept Task'}
+                        </button>
+                      </div>
                     );
                   }
                 })()}

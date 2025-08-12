@@ -11,6 +11,7 @@ export interface IFrontendUser {
   profilePicture?: string;
   about?: string;
   gender?: 'male' | 'female' | 'rather not say';
+  aadhaar?: string;
 }
 
 export interface ICreateTaskData {
@@ -62,6 +63,7 @@ export interface RegisterData {
   about?: string;
   role: 'user' | 'volunteer';
   gender?: 'male' | 'female' | 'rather not say';
+  aadhaar?: string; // Made optional to handle existing users
 }
 
 export interface LocationData {

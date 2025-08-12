@@ -1,5 +1,5 @@
 import express from 'express';
-import { createTask, getTasks, acceptTask, deleteTask } from '../controllers/taskController';
+import { createTask, getTasks, acceptTask, deleteTask, updateTask } from '../controllers/taskController';
 
 const router = express.Router();
 
@@ -11,6 +11,27 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Error creating task:', err);
     console.error('Request body:', req.body);
+    res.status(500).json({ message: 'Server error', error: err });
+  }
+});
+
+// Update Task
+router.put('/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const userId = req.headers['userid'];
+    
+    // Check if the user is the creator
+    if (userId) {
+      const task = await getTasks({ _id: taskId });
+      if (task.length > 0 && task[0].createdBy._id.toString() !== userId) {
+        return res.status(403).json({ success: false, message: 'You are not authorized to update this task.' });
+      }
+    }
+    
+    const updatedTask = await updateTask(taskId, req.body);
+    res.json(updatedTask);
+  } catch (err) {
     res.status(500).json({ message: 'Server error', error: err });
   }
 });

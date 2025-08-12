@@ -8,11 +8,18 @@ const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender } = req.body;
+    const { name, email, password, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender, aadhaar } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Email already exists' });
+    
+    // Check if Aadhaar already exists only if Aadhaar is provided
+    if (aadhaar) {
+      const existingAadhaar = await User.findOne({ aadhaar });
+      if (existingAadhaar) return res.status(400).json({ message: 'Aadhaar number already registered' });
+    }
+    
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender });
+    const user = new User({ name, email, password: hashedPassword, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender, aadhaar });
     await user.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {

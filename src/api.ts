@@ -37,12 +37,31 @@ export async function getTasks() {
   return res.json();
 }
 
+export async function getTasksByUser(userId: string) {
+  const res = await fetch(`${API_URL}/tasks?createdBy=${userId}`);
+  return res.json();
+}
+
 export async function createTask(data: ICreateTaskData, token: string) {
   const res = await fetch(`${API_URL}/tasks`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({...data})
+  });
+  return res.json();
+}
+
+export async function updateTask(taskId: string, data: ICreateTaskData, token: string) {
+  const userId = localStorage.getItem('userId');
+  const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'userid': userId || ''
     },
     body: JSON.stringify({...data})
   });
@@ -86,10 +105,12 @@ export async function uploadProfilePicture(file: File, token: string) {
 }
 
 export async function deleteTask(taskId: string, token: string) {
+  const userId = localStorage.getItem('userId');
   const res = await fetch(`${API_URL}/tasks/${taskId}`, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${token}`
+      'Authorization': `Bearer ${token}`,
+      'userid': userId || ''
     }
   });
   return res.json();

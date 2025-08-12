@@ -142,6 +142,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                       <span className="text-gray-600">{profile.location}</span>
                     </div>
                   )}
+                  {profile?.aadhaar ? (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-500">🆔</span>
+                      <span className="text-gray-600">Aadhaar: {profile.aadhaar}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-500">🆔</span>
+                      <span className="text-gray-400">Aadhaar: Not provided</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

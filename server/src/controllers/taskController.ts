@@ -37,6 +37,30 @@ export const createTask = async (taskData: Omit<ITask, 'acceptedBy' | 'createdAt
   return await task.save();
 };
 
+export const updateTask = async (taskId: string, updateData: Partial<Omit<ITask, 'acceptedBy' | 'createdAt' | 'updatedAt' | '_id'>>) => {
+  const task = await Task.findById(taskId);
+  if (!task) {
+    throw new Error('Task not found');
+  }
+
+  // Update allowed fields
+  if (updateData.title !== undefined) task.title = updateData.title;
+  if (updateData.description !== undefined) task.description = updateData.description;
+  if (updateData.peopleNeeded !== undefined) task.peopleNeeded = updateData.peopleNeeded;
+  if (updateData.urgency !== undefined) task.urgency = updateData.urgency;
+  if (updateData.location !== undefined) {
+    if (!validateLocation(updateData.location)) {
+      throw new Error('Invalid location data');
+    }
+    task.location = formatLocationForDB(updateData.location);
+  }
+  if (updateData.approxStartTime !== undefined) task.approxStartTime = updateData.approxStartTime;
+  if (updateData.endTime !== undefined) task.endTime = updateData.endTime;
+  if (updateData.amount !== undefined) task.amount = updateData.amount;
+
+  return await task.save();
+};
+
 export const getTasks = async (filter: FilterQuery<ITask> = {}) => {
   const tasks = await Task.find(filter)
     .populate('createdBy', 'name email')
