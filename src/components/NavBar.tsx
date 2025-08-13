@@ -14,6 +14,7 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [userProfile, setUserProfile] = useState<IFrontendUser | null>(null);
+  const [profileImgError, setProfileImgError] = useState(false);
   const navigate = useNavigate();
   
   const userName = localStorage.getItem('userName') || 'User';
@@ -31,6 +32,7 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
           const data = await getUserProfile(userId, token);
           if (data && data._id) {
             setUserProfile(data);
+            setProfileImgError(false);
           }
         }
       } catch (error) {
@@ -73,34 +75,37 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
   };
 
   const getProfilePicture = () => {
-    if (userProfile?.profilePicture) {
-      let imageUrl = userProfile.profilePicture;
-      
-      // If it's not an absolute URL, make it relative to the public directory
-      if (!userProfile.profilePicture.startsWith('http')) {
-        // Remove leading slash if present and ensure it's relative to public
-        const cleanPath = userProfile.profilePicture.replace(/^\//, '');
-        imageUrl = `/${cleanPath}`;
-      }
-
+    const raw = userProfile?.profilePicture || '';
+    if (!raw || profileImgError) {
       return (
-        <img 
-          src={imageUrl} 
-          alt={userName}
-          className="w-8 h-8 rounded-full object-cover"
-          onError={() => {
-            console.error('Profile picture failed to load in NavBar:', imageUrl);
-          }}
-        />
+        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+          <span className="text-white font-semibold text-sm">
+            {userName.charAt(0).toUpperCase()}
+          </span>
+        </div>
       );
     }
-    
+
+    let imageUrl = raw;
+    if (!raw.startsWith('http')) {
+      let cleanPath = raw.replace(/^\//, '');
+      // Normalize common filename-only values to public/profile_pics
+      if (/^(male|female|rather_not_say)\.jpg$/i.test(cleanPath)) {
+        cleanPath = `profile_pics/${cleanPath}`;
+      }
+      imageUrl = `/${cleanPath}`;
+    }
+
     return (
-      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-        <span className="text-white font-semibold text-sm">
-          {userName.charAt(0).toUpperCase()}
-        </span>
-      </div>
+      <img
+        src={imageUrl}
+        alt={userName}
+        className="w-8 h-8 rounded-full object-cover"
+        onError={() => {
+          console.error('Profile picture failed to load in NavBar:', imageUrl);
+          setProfileImgError(true);
+        }}
+      />
     );
   };
 
@@ -108,14 +113,16 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
     <nav className={`bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 py-3">
+  <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-3">
         <div className="flex justify-between items-center">
           {/* Left side - SmartServe branding */}
           <div className="flex items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
+              <img
+                src="/favicon.svg"
+                alt="SmartServe logo"
+                className="w-10 h-10 rounded-lg"
+              />
               <div>
                 <h1 className="text-xl font-bold text-blue-700">SmartServe</h1>
                 <p className="text-xs text-gray-500 capitalize">{userType} Dashboard</p>

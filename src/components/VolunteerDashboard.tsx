@@ -167,17 +167,8 @@ const VolunteerDashboard: React.FC = () => {
         showProfile={showProfile}
       />
       <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
-      <div className="bg-white p-8 rounded-2xl shadow-lg">
-      <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-blue-700">Available Tasks</h2>
-            <button
-              onClick={refreshTasks}
-              disabled={loading}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Refreshing...' : '🔄 Refresh Tasks'}
-            </button>
-          </div>
+  {!showProfile && (
+    <div className="bg-white p-8 rounded-2xl shadow-lg mb-8">
 
           {/* Task Category Navigation */}
           <div className="mb-8 p-4 bg-gray-50 rounded-lg border">
@@ -212,10 +203,19 @@ const VolunteerDashboard: React.FC = () => {
             </div>
           </div>
       </div>
+  )}
       {!showProfile ? (
         <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          
-          <h2 className="text-2xl font-bold text-blue-700 mb-6">Available Tasks</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-blue-700">Available Tasks</h2>
+            <button
+              onClick={refreshTasks}
+              disabled={loading}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Refreshing...' : '🔄 Refresh Tasks'}
+            </button>
+          </div>
           {loading ? <p className="text-gray-500">Loading tasks...</p> : null}
           {error && <p className="text-red-500 mt-2">{error}</p>}
           {message && <p className={`mt-2 font-semibold ${message.includes('accepted') ? 'text-green-600' : 'text-red-500'}`}>{message}</p>}
@@ -575,6 +575,28 @@ const VolunteerDashboard: React.FC = () => {
           {profileError && <p className="text-red-500 mt-2">{profileError}</p>}
           {profileMessage && <p className="text-green-600 mt-2">{profileMessage}</p>}
           <form onSubmit={handleProfileSubmit} className="space-y-4">
+            {/* Profile Picture Section - Preview at top */}
+            <div className="text-center mb-6">
+              <label className="block font-medium text-gray-700 mb-3">Profile Picture:</label>
+              {profile?.profilePicture ? (
+                <div className="flex justify-center">
+                  <img
+                    src={`/${profile.profilePicture.replace(/^\//, '')}`}
+                    alt="Profile Preview"
+                    className="w-24 h-24 object-cover rounded-full border-4 border-blue-200 shadow-lg"
+                    onError={() => {
+                      console.error('Profile picture failed to load:', profile.profilePicture);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mx-auto border-4 border-blue-200 shadow-lg">
+                  <span className="text-white font-semibold text-2xl">
+                    {profile?.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </div>
+              )}
+            </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Full Name:</label>
               <input type="text" name="name" value={profile?.name || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />

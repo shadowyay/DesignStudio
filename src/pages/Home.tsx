@@ -30,8 +30,11 @@ const Home: React.FC = () => {
   return (
     <>
       <header className="bg-white shadow-md sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-blue-700 tracking-tight">SmartServe</h1>
+        <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <img src="/favicon.svg" alt="SmartServe logo" className="w-10 h-10 rounded-lg" />
+            <h1 className="text-2xl font-bold text-blue-700 tracking-tight">SmartServe</h1>
+          </div>
           <nav className="space-x-6">
             <a href="#home" className="text-gray-700 hover:text-blue-600 font-medium transition">Home</a>
             <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium transition">About</a>

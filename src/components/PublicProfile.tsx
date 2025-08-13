@@ -20,6 +20,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
   userGender
 }) => {
   const [profile, setProfile] = useState<IFrontendUser | null>(null);
+  const [imgError, setImgError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -65,34 +66,34 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
   };
 
   const getProfilePicture = () => {
-    if (profile?.profilePicture) {
-      let imageUrl = profile.profilePicture;
-      
-      // If it's not an absolute URL, make it relative to the public directory
-      if (!profile.profilePicture.startsWith('http')) {
-        // Remove leading slash if present and ensure it's relative to public
-        const cleanPath = profile.profilePicture.replace(/^\//, '');
-        imageUrl = `/${cleanPath}`;
-      }
-
+    const raw = profile?.profilePicture || '';
+    if (!raw || imgError) {
       return (
-        <img 
-          src={imageUrl} 
-          alt={userName}
-          className="w-12 h-12 rounded-full object-cover"
-          onError={() => {
-            console.error('Image failed to load in PublicProfile:', imageUrl);
-          }}
-        />
+        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+          <span className="text-white font-semibold text-lg">
+            {getInitials(userName)}
+          </span>
+        </div>
       );
     }
-    
+    let imageUrl = raw;
+    if (!raw.startsWith('http')) {
+      let cleanPath = raw.replace(/^\//, '');
+      if (/^(male|female|rather_not_say)\.jpg$/i.test(cleanPath)) {
+        cleanPath = `profile_pics/${cleanPath}`;
+      }
+      imageUrl = `/${cleanPath}`;
+    }
     return (
-      <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-        <span className="text-white font-semibold text-lg">
-          {getInitials(userName)}
-        </span>
-      </div>
+      <img
+        src={imageUrl}
+        alt={userName}
+        className="w-12 h-12 rounded-full object-cover"
+        onError={() => {
+          console.error('Image failed to load in PublicProfile:', imageUrl);
+          setImgError(true);
+        }}
+      />
     );
   };
 
