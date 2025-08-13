@@ -62,7 +62,8 @@ const GeneralTasksPage: React.FC = () => {
     setError('');
 
     try {
-      const result = await acceptTask(taskId, userId);
+  const token = localStorage.getItem('token');
+  const result = await acceptTask(taskId, userId, token);
       if (result.success) {
         setMessage('General task accepted successfully!');
         setTimeout(() => {

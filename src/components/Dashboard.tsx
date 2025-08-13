@@ -24,7 +24,8 @@ const Dashboard: React.FC = () => {
     endTime: '',
     urgency: 'Normal',
     amount: 0,
-  });
+      taskCategory: 'General',
+    });
   const [editingTask, setEditingTask] = useState<IFrontendTask | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([20.5937, 78.9629]); // Default to India
@@ -151,7 +152,8 @@ const Dashboard: React.FC = () => {
           address: currentLocation.address || '',
           lat: currentLocation.lat,
           lng: currentLocation.lng
-        }
+        },
+        taskCategory: newTask.taskCategory || 'General'
       });
       
       setShowForm(true);
@@ -191,14 +193,17 @@ const Dashboard: React.FC = () => {
       const createdByUser: IFrontendUser = {
         _id: createdBy,
         name: localStorage.getItem('userName') || '',
-      };
+          email: localStorage.getItem('userEmail') || '',
+          role: 'user',
+          aadhaar: localStorage.getItem('aadhaar') || '',
+        };
 
       const res = await createTask({ ...newTask, createdBy: createdByUser }, token);
       if (res._id) {
-        fetchTasks();
-        setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
-        setMarkerPosition(null);
-        setShowForm(false);
+  fetchTasks();
+  setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0, taskCategory: 'General' });
+  setMarkerPosition(null);
+  setShowForm(false);
       } else {
         setError(res.message || 'Failed to create task');
       }
@@ -222,7 +227,7 @@ const Dashboard: React.FC = () => {
         return;
       }
       
-      const res = await updateTask(editingTask._id, editingTask, token);
+  const res = await updateTask(editingTask._id, { ...editingTask, taskCategory: newTask.taskCategory || 'General' }, token);
       if (res._id) {
         fetchTasks();
         setEditingTask(null);
@@ -785,7 +790,7 @@ const Dashboard: React.FC = () => {
                 <input 
                   type="text" 
                   name="aadhaar" 
-                  value={profile.aadhaar || ''} 
+                  value={(profile as IFrontendUser).aadhaar || ''} 
                   onChange={handleProfileChange} 
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
                   placeholder="123456789012"
@@ -828,7 +833,7 @@ const Dashboard: React.FC = () => {
                </div>
                <div>
                  <label className="block font-medium text-gray-700 mb-1">Aadhaar Number:</label>
-                 <p className="text-gray-900">{profile?.aadhaar || 'Not provided'}</p>
+                 <p className="text-gray-900">{(profile as IFrontendUser)?.aadhaar || 'Not provided'}</p>
                </div>
              </div>
           )}
