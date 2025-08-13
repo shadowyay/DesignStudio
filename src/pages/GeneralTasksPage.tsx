@@ -24,10 +24,12 @@ const GeneralTasksPage: React.FC = () => {
           // Filter only General and Other tasks and exclude full tasks
           const generalTasks = res.filter((task: IFrontendTask) => {
             if (task.taskCategory !== 'General' && task.taskCategory !== 'Other') return false;
+            const currentUserAccepted = !!(userId && task.acceptedBy?.some((vol: IFrontendUser) => vol._id === userId));
+            if (currentUserAccepted) return true;
             if (task.isFull) return false;
-            if (!task.acceptedBy || task.acceptedBy.length === 0) return true;
-            if (userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId)) return true;
-            return false;
+            const acceptedCount = task.acceptedCount ?? (task.acceptedBy?.length ?? 0);
+            const availableSpots = (task.peopleNeeded || 0) - acceptedCount;
+            return availableSpots > 0;
           });
           setTasks(generalTasks);
           setError('');

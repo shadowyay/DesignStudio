@@ -31,16 +31,14 @@ const VolunteerDashboard: React.FC = () => {
           if (Array.isArray(res)) {
             // Filter tasks: show available tasks + tasks accepted by current volunteer
             const filteredTasks = res.filter((task: IFrontendTask) => {
-              // Skip tasks that are full (all volunteers accepted)
-              if (task.isFull) return false;
-              
-              // Show tasks that haven't been accepted by anyone
-              if (!task.acceptedBy || task.acceptedBy.length === 0) return true;
-              
-              // Show tasks that the current volunteer has accepted
-              if (userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId)) return true;
-              
-              // Don't show tasks accepted by other volunteers (unless current user also accepted)
+              const currentUserAccepted = !!(userId && task.acceptedBy?.some((vol: IFrontendUser) => vol._id === userId));
+              if (currentUserAccepted) return true;
+              if (task.taskCategory && ['General', 'Donor', 'Blood Emergency', 'Other'].includes(task.taskCategory)) {
+                if (task.isFull) return false;
+                const acceptedCount = task.acceptedCount ?? (task.acceptedBy?.length ?? 0);
+                const availableSpots = (task.peopleNeeded || 0) - acceptedCount;
+                return availableSpots > 0;
+              }
               return false;
             });
             
