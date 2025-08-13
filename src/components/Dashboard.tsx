@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createTask, getTasksByUser, deleteTask, getUserProfile, updateUserProfile, updateTask } from '../api';
 import LocationMap from './LocationMap';
@@ -36,6 +36,7 @@ const Dashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
+  const [search, setSearch] = useState('');
   const formRef = useRef<HTMLDivElement>(null);
 
   const fetchTasks = () => {
@@ -52,6 +53,18 @@ const Dashboard: React.FC = () => {
       .catch((_err) => setError('Failed to fetch tasks'))
       .finally(() => setLoading(false));
   };
+
+  // Client-side search for posted tasks
+  const visibleTasks: IFrontendTask[] = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return tasks;
+    return tasks.filter((t: IFrontendTask) => {
+      const title = t.title?.toLowerCase() || '';
+      const desc = t.description?.toLowerCase() || '';
+      const addr = t.location?.address?.toLowerCase() || '';
+      return title.includes(q) || desc.includes(q) || addr.includes(q);
+    });
+  }, [tasks, search]);
 
 
 
@@ -327,26 +340,35 @@ const Dashboard: React.FC = () => {
       />
       <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
       {!showProfile && (
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName')}</h1>
-          <button
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={locationLoading}
-            onClick={() => {
-              if (showForm) {
-                // Cancel form
-                setShowForm(false);
-                setEditingTask(null);
-                setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0, taskCategory: 'General' });
-                setMarkerPosition(null);
-              } else {
-                // Open form with current location
-                handleOpenCreateForm();
-              }
-            }}
-          >
-            {locationLoading ? 'Getting Location...' : (showForm ? 'Cancel' : 'Create New Task')}
-          </button>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search your tasks (title, description, location)"
+              className="flex-1 md:w-96 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
+            />
+            <button
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={locationLoading}
+              onClick={() => {
+                if (showForm) {
+                  // Cancel form
+                  setShowForm(false);
+                  setEditingTask(null);
+                  setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0, taskCategory: 'General' });
+                  setMarkerPosition(null);
+                } else {
+                  // Open form with current location
+                  handleOpenCreateForm();
+                }
+              }}
+            >
+              {locationLoading ? 'Getting Location...' : (showForm ? 'Cancel' : 'Create New Task')}
+            </button>
+          </div>
         </div>
       )}
 
@@ -500,19 +522,19 @@ const Dashboard: React.FC = () => {
 
           <div className="bg-white p-8 rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold text-blue-700 mb-6">Tasks Posted by You</h2>
-        {loading ? <p>Loading tasks...</p> : (
+  {loading ? <p>Loading tasks...</p> : (
           <>
             {/* Blood Emergency Tasks */}
-            {tasks.filter(task => task.taskCategory === 'Blood Emergency').length > 0 && (
+      {visibleTasks.filter(task => task.taskCategory === 'Blood Emergency').length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center">
                   🩸 Blood Emergency Tasks
                   <span className="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">
-                    {tasks.filter(task => task.taskCategory === 'Blood Emergency').length}
+        {visibleTasks.filter(task => task.taskCategory === 'Blood Emergency').length}
                   </span>
                 </h3>
                 <ul className="space-y-4">
-                  {tasks.filter(task => task.taskCategory === 'Blood Emergency').map(task => (
+      {visibleTasks.filter(task => task.taskCategory === 'Blood Emergency').map(task => (
                     <li key={task._id} className="border border-red-200 rounded-lg p-4 shadow-sm bg-red-50">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-lg font-bold text-red-700">{task.title}</h4>
@@ -564,16 +586,16 @@ const Dashboard: React.FC = () => {
             )}
 
             {/* Donor Tasks */}
-            {tasks.filter(task => task.taskCategory === 'Donor').length > 0 && (
+            {visibleTasks.filter(task => task.taskCategory === 'Donor').length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center">
                   🫀 Donor Tasks
                   <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
-                    {tasks.filter(task => task.taskCategory === 'Donor').length}
+                    {visibleTasks.filter(task => task.taskCategory === 'Donor').length}
                   </span>
                 </h3>
                 <ul className="space-y-4">
-                  {tasks.filter(task => task.taskCategory === 'Donor').map(task => (
+                  {visibleTasks.filter(task => task.taskCategory === 'Donor').map(task => (
                     <li key={task._id} className="border border-green-200 rounded-lg p-4 shadow-sm bg-green-50">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-lg font-bold text-green-700">{task.title}</h4>
@@ -625,16 +647,16 @@ const Dashboard: React.FC = () => {
             )}
 
             {/* General and Other Tasks */}
-            {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length > 0 && (
+            {visibleTasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center">
                   📋 General & Other Tasks
                   <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                    {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length}
+                    {visibleTasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length}
                   </span>
                 </h3>
                 <ul className="space-y-4">
-                  {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').map(task => (
+                  {visibleTasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').map(task => (
                     <li key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-lg font-bold text-blue-700">{task.title}</h4>
@@ -686,7 +708,7 @@ const Dashboard: React.FC = () => {
             )}
 
             {/* No Tasks Message */}
-            {tasks.length === 0 && (
+            {visibleTasks.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-gray-500 text-lg">No tasks posted yet.</p>
                 <p className="text-gray-400 text-sm mt-2">Create your first task to get started!</p>

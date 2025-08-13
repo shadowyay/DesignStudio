@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
 import AddressDisplay from './AddressDisplay';
@@ -19,6 +19,7 @@ const VolunteerDashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
+  const [search, setSearch] = useState('');
 
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token'); // Retrieve token here
@@ -81,6 +82,18 @@ const VolunteerDashboard: React.FC = () => {
         .finally(() => setProfileLoading(false));
     }
   }, [showProfile, userId, token, refreshTasks]); 
+
+  // Search filtering for available tasks
+  const visibleTasks: IFrontendTask[] = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return tasks;
+    return tasks.filter((t: IFrontendTask) => {
+      const title = t.title?.toLowerCase() || '';
+      const desc = t.description?.toLowerCase() || '';
+      const addr = t.location?.address?.toLowerCase() || '';
+      return title.includes(q) || desc.includes(q) || addr.includes(q);
+    });
+  }, [tasks, search]);
 
   const handleAccept = async (taskId: string) => {
     if (!userId) {
@@ -206,25 +219,37 @@ const VolunteerDashboard: React.FC = () => {
   )}
       {!showProfile ? (
         <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
             <h2 className="text-2xl font-bold text-blue-700">Available Tasks</h2>
-            <button
-              onClick={refreshTasks}
-              disabled={loading}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Refreshing...' : '🔄 Refresh Tasks'}
-            </button>
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search tasks (title, description, location)"
+                className="flex-1 md:w-80 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
+              />
+              <button
+                onClick={refreshTasks}
+                disabled={loading}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Refreshing...' : '🔄 Refresh'}
+              </button>
+            </div>
           </div>
+          {/** derive visible tasks based on search **/}
+          {/** computed via useMemo below **/}
           {loading ? <p className="text-gray-500">Loading tasks...</p> : null}
           {error && <p className="text-red-500 mt-2">{error}</p>}
           {message && <p className={`mt-2 font-semibold ${message.includes('accepted') ? 'text-green-600' : 'text-red-500'}`}>{message}</p>}
           
           {/* Task Summary */}
-          {!loading && tasks.length > 0 && (
+      {!loading && visibleTasks.length > 0 && (
             <div className="mb-4 p-3 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-700">
-                Showing {tasks.length} task{tasks.length !== 1 ? 's' : ''} - 
+        Showing {visibleTasks.length} task{visibleTasks.length !== 1 ? 's' : ''}
+        {search ? ' (filtered)' : ''} - 
                 Available to accept or already accepted by you
               </p>
             </div>
@@ -232,16 +257,16 @@ const VolunteerDashboard: React.FC = () => {
           
           <div id="taskList" className="space-y-6 mt-6">
             {/* Blood Emergency Tasks */}
-            {tasks.filter(task => task.taskCategory === 'Blood Emergency').length > 0 && (
+            {visibleTasks.filter(task => task.taskCategory === 'Blood Emergency').length > 0 && (
               <div>
                 <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center">
                   🩸 Blood Emergency Tasks
                   <span className="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">
-                    {tasks.filter(task => task.taskCategory === 'Blood Emergency').length}
+                    {visibleTasks.filter(task => task.taskCategory === 'Blood Emergency').length}
                   </span>
                 </h3>
                 <div className="space-y-4">
-                  {tasks.filter(task => task.taskCategory === 'Blood Emergency').map(task => (
+                  {visibleTasks.filter(task => task.taskCategory === 'Blood Emergency').map(task => (
                     <div key={task._id} className="border border-red-200 rounded-lg p-4 shadow-sm bg-red-50">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-lg font-bold text-red-700">{task.title}</h4>
@@ -341,16 +366,16 @@ const VolunteerDashboard: React.FC = () => {
             )}
 
             {/* Donor Tasks */}
-            {tasks.filter(task => task.taskCategory === 'Donor').length > 0 && (
+            {visibleTasks.filter(task => task.taskCategory === 'Donor').length > 0 && (
               <div>
                 <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center">
                   🫀 Donor Tasks
                   <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
-                    {tasks.filter(task => task.taskCategory === 'Donor').length}
+                    {visibleTasks.filter(task => task.taskCategory === 'Donor').length}
                   </span>
                 </h3>
                 <div className="space-y-4">
-                  {tasks.filter(task => task.taskCategory === 'Donor').map(task => (
+                  {visibleTasks.filter(task => task.taskCategory === 'Donor').map(task => (
                     <div key={task._id} className="border border-green-200 rounded-lg p-4 shadow-sm bg-green-50">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-lg font-bold text-green-700">{task.title}</h4>
@@ -450,16 +475,16 @@ const VolunteerDashboard: React.FC = () => {
             )}
 
             {/* General and Other Tasks */}
-            {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length > 0 && (
+            {visibleTasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length > 0 && (
               <div>
                 <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center">
                   📋 General & Other Tasks
                   <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                    {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length}
+                    {visibleTasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length}
                   </span>
                 </h3>
                 <div className="space-y-4">
-                  {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').map(task => (
+                  {visibleTasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').map(task => (
               <div key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="text-lg font-bold text-blue-700">{task.title}</h4>
@@ -559,7 +584,7 @@ const VolunteerDashboard: React.FC = () => {
             )}
 
             {/* No Tasks Message */}
-            {tasks.length === 0 && !loading ? (
+            {visibleTasks.length === 0 && !loading ? (
               <div className="text-center py-8">
                 <p className="text-gray-500 text-lg">No tasks available at the moment.</p>
                 <p className="text-gray-400 text-sm mt-2">Check back later for new volunteer opportunities!</p>
