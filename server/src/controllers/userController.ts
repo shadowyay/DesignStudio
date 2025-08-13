@@ -17,7 +17,23 @@ interface IUserUpdate {
   // Note: aadhaar is not included here as it should not be updatable
 }
 
-export const register = async (userData: any) => {
+type RegisterInput = {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  dob?: string;
+  location?: string;
+  role: 'user' | 'volunteer';
+  skills?: string[];
+  openToAnything?: boolean;
+  profilePicture?: string;
+  about?: string;
+  gender?: string;
+  aadhaar: string;
+};
+
+export const register = async (userData: RegisterInput) => {
   const { name, email, password, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender, aadhaar } = userData;
 
   if (!aadhaar || !/^[0-9]{12}$/.test(aadhaar)) {

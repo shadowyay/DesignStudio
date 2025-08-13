@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
 import AddressDisplay from './AddressDisplay';
@@ -23,7 +23,7 @@ const VolunteerDashboard: React.FC = () => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token'); // Retrieve token here
 
-  const refreshTasks = () => {
+  const refreshTasks = useCallback(() => {
     if (!showProfile) {
       setLoading(true);
       getTasks()
@@ -57,7 +57,7 @@ const VolunteerDashboard: React.FC = () => {
         })
         .finally(() => setLoading(false));
     }
-  };
+  }, [showProfile, userId]);
 
   useEffect(() => {
     refreshTasks();
@@ -82,7 +82,7 @@ const VolunteerDashboard: React.FC = () => {
         .catch((_err) => setProfileError('Failed to load profile'))
         .finally(() => setProfileLoading(false));
     }
-  }, [showProfile, userId, token]); 
+  }, [showProfile, userId, token, refreshTasks]); 
 
   const handleAccept = async (taskId: string) => {
     if (!userId) {
@@ -97,7 +97,7 @@ const VolunteerDashboard: React.FC = () => {
         setAccepting(null);
         return;
       }
-      const result = await acceptTask(taskId, userId, token);
+  const result = await acceptTask(taskId, userId!, token!);
       if (result.success) {
         setMessage('Task accepted successfully!');
         // Refresh tasks to show updated status

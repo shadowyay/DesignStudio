@@ -790,7 +790,7 @@ const Dashboard: React.FC = () => {
                 <input 
                   type="text" 
                   name="aadhaar" 
-                  value={(profile as IFrontendUser).aadhaar || ''} 
+                  value={profile?.aadhaar || ''} 
                   onChange={handleProfileChange} 
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
                   placeholder="123456789012"
@@ -833,7 +833,7 @@ const Dashboard: React.FC = () => {
                </div>
                <div>
                  <label className="block font-medium text-gray-700 mb-1">Aadhaar Number:</label>
-                 <p className="text-gray-900">{(profile as IFrontendUser)?.aadhaar || 'Not provided'}</p>
+                 <p className="text-gray-900">{localStorage.getItem('aadhaar') || 'Not provided'}</p>
                </div>
              </div>
           )}

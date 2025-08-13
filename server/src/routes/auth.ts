@@ -1,7 +1,4 @@
 import express from 'express';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import User from '../models/User';
 import { register, login, verifyEmail, resendVerificationEmail } from '../controllers/userController';
 
 const router = express.Router();
@@ -11,8 +8,9 @@ router.post('/register', async (req, res) => {
   try {
     const result = await register(req.body);
     res.status(201).json(result);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Registration failed';
+    res.status(400).json({ message });
   }
 });
 
@@ -22,8 +20,9 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const result = await login(email, password);
     res.json(result);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Login failed';
+    res.status(400).json({ message });
   }
 });
 
@@ -37,8 +36,9 @@ router.get('/verify-email', async (req, res) => {
     
     const result = await verifyEmail(token);
     res.json(result);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Verification failed';
+    res.status(400).json({ message });
   }
 });
 
@@ -52,8 +52,9 @@ router.post('/resend-verification', async (req, res) => {
     
     const result = await resendVerificationEmail(email);
     res.json(result);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Resend failed';
+    res.status(400).json({ message });
   }
 });
 

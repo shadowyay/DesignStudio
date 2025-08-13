@@ -39,7 +39,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         } else {
           setError('Failed to load profile');
         }
-      } catch (err) {
+  } catch (_err) {
         setError('Failed to load profile');
       } finally {
         setLoading(false);

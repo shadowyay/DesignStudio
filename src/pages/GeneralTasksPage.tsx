@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, acceptTask } from '../api';
 import AddressDisplay from '../components/AddressDisplay';
@@ -16,15 +16,7 @@ const GeneralTasksPage: React.FC = () => {
   const userId = localStorage.getItem('userId');
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchTasks();
-  }, [token, navigate]);
-
-  const fetchTasks = () => {
+  const fetchTasks = useCallback(() => {
     setLoading(true);
     getTasks()
       .then((res: IFrontendTask[]) => {
@@ -49,7 +41,15 @@ const GeneralTasksPage: React.FC = () => {
         setTasks([]);
       })
       .finally(() => setLoading(false));
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    fetchTasks();
+  }, [token, navigate, fetchTasks]);
 
   const handleAccept = async (taskId: string) => {
     if (!userId || !token) {
@@ -62,8 +62,7 @@ const GeneralTasksPage: React.FC = () => {
     setError('');
 
     try {
-  const token = localStorage.getItem('token');
-  const result = await acceptTask(taskId, userId, token);
+      const result = await acceptTask(taskId, userId!, token!);
       if (result.success) {
         setMessage('General task accepted successfully!');
         setTimeout(() => {
@@ -73,8 +72,9 @@ const GeneralTasksPage: React.FC = () => {
       } else {
         setMessage(result.message || 'Could not accept task.');
       }
-    } catch (err: any) {
-      setMessage(err.message || 'Failed to accept task.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to accept task.';
+      setMessage(msg);
     } finally {
       setAccepting(null);
     }

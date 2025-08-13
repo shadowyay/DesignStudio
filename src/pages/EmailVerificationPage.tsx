@@ -24,7 +24,7 @@ const EmailVerificationPage: React.FC = () => {
       setMessage('Invalid verification link. Please check your email for the correct link.');
     }
     // Intentionally empty dependency array to run once on mount
-  }, []);
+  }, [searchParams]);
 
   const verifyEmail = async (token: string) => {
     try {
@@ -38,7 +38,7 @@ const EmailVerificationPage: React.FC = () => {
         setVerificationStatus('error');
         setMessage(data.message || 'Verification failed');
       }
-    } catch (error) {
+  } catch (_error) {
       setVerificationStatus('error');
       setMessage('Network error. Please try again.');
     }
@@ -67,7 +67,7 @@ const EmailVerificationPage: React.FC = () => {
       } else {
         setMessage(data.message || 'Failed to resend verification email');
       }
-    } catch (error) {
+  } catch (_error) {
       setMessage('Network error. Please try again.');
     } finally {
       setResendLoading(false);
