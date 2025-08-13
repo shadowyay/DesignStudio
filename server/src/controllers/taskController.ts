@@ -5,7 +5,7 @@ import mongoose, { FilterQuery } from 'mongoose';
 import { ITask } from '../models/Task';
 
 export const createTask = async (taskData: Omit<ITask, 'acceptedBy' | 'createdAt' | 'updatedAt' | '_id'>) => {
-  const { title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime, amount } = taskData;
+  const { title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime, amount, taskCategory } = taskData;
   
   // Validate user exists
   const user = await User.findById(createdBy);
@@ -31,7 +31,8 @@ export const createTask = async (taskData: Omit<ITask, 'acceptedBy' | 'createdAt
     location: formattedLocation, 
     approxStartTime, 
     endTime, 
-    amount 
+    amount,
+    taskCategory: taskCategory || 'General'
   });
   
   return await task.save();
@@ -57,6 +58,7 @@ export const updateTask = async (taskId: string, updateData: Partial<Omit<ITask,
   if (updateData.approxStartTime !== undefined) task.approxStartTime = updateData.approxStartTime;
   if (updateData.endTime !== undefined) task.endTime = updateData.endTime;
   if (updateData.amount !== undefined) task.amount = updateData.amount;
+  if (updateData.taskCategory !== undefined) task.taskCategory = updateData.taskCategory;
 
   return await task.save();
 };
@@ -82,7 +84,8 @@ export const getTasks = async (filter: FilterQuery<ITask> = {}) => {
     acceptedCount: task.acceptedBy.length,
     isFull: task.acceptedBy.length >= task.peopleNeeded,
     createdAt: task.createdAt,
-    updatedAt: task.updatedAt
+    updatedAt: task.updatedAt,
+    taskCategory: task.taskCategory
   }));
 };
 

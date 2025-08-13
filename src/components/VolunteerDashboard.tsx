@@ -44,8 +44,8 @@ const VolunteerDashboard: React.FC = () => {
               return false;
             });
             
-            setTasks(filteredTasks);
-            setError('');
+          setTasks(filteredTasks);
+          setError('');
           } else {
             setTasks([]);
             setError('Invalid response format from server');
@@ -82,7 +82,7 @@ const VolunteerDashboard: React.FC = () => {
         .catch((_err) => setProfileError('Failed to load profile'))
         .finally(() => setProfileLoading(false));
     }
-  }, [showProfile, userId, token]);
+  }, [showProfile, userId, token]); 
 
   const handleAccept = async (taskId: string) => {
     if (!userId) {
@@ -197,66 +197,288 @@ const VolunteerDashboard: React.FC = () => {
             </div>
           )}
           
-          <div id="taskList" className="space-y-4 mt-6">
-            {tasks.length === 0 && !loading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500 text-lg">No tasks available at the moment.</p>
-                <p className="text-gray-400 text-sm mt-2">Check back later for new volunteer opportunities!</p>
-              </div>
-            ) : null}
-            {tasks.map(task => (
-              <div key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold text-blue-700">{task.title}</h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    task.urgency === 'Emergency' ? 'bg-red-100 text-red-800' :
-                    task.urgency === 'Urgent' ? 'bg-orange-100 text-orange-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {task.urgency}
+          <div id="taskList" className="space-y-6 mt-6">
+            {/* Blood Emergency Tasks */}
+            {tasks.filter(task => task.taskCategory === 'Blood Emergency').length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center">
+                  🩸 Blood Emergency Tasks
+                  <span className="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">
+                    {tasks.filter(task => task.taskCategory === 'Blood Emergency').length}
                   </span>
+                </h3>
+                <div className="space-y-4">
+                  {tasks.filter(task => task.taskCategory === 'Blood Emergency').map(task => (
+                    <div key={task._id} className="border border-red-200 rounded-lg p-4 shadow-sm bg-red-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold text-red-700">{task.title}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          task.urgency === 'Emergency' ? 'bg-red-100 text-red-800' :
+                          task.urgency === 'Urgent' ? 'bg-orange-100 text-orange-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.urgency}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 mb-3">{task.description}</p>
+                      
+                      <AddressDisplay
+                        address={task.location?.address}
+                        lat={task.location?.lat}
+                        lng={task.location?.lng}
+                      />
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Start Time:</span>
+                          <p className="text-gray-700">{task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                        </div>
+                        {task.endTime && (
+                          <div>
+                            <span className="text-gray-500">End Time:</span>
+                            <p className="text-gray-700">{new Date(task.endTime).toLocaleString()}</p>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-500">Volunteers:</span>
+                          <p className="text-gray-700">{task.acceptedCount || 0} / {task.peopleNeeded}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Amount:</span>
+                          <p className="text-gray-700">₹{task.amount?.toFixed(2) || '0.00'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Task Status and Actions */}
+                      {(() => {
+                        const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId);
+                        const availableSpots = (task.peopleNeeded || 0) - (task.acceptedCount || 0);
+
+                        if (currentUserAccepted) {
+                          return (
+                            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <p className="text-green-700 font-bold mb-2">✅ You have accepted this task!</p>
+                              {task.createdBy && (
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-2">Task Created By:</p>
+                                  <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                                    <PublicProfile
+                                      userId={task.createdBy._id || ''}
+                                      userName={task.createdBy.name || 'Unknown User'}
+                                      userEmail={task.createdBy.email || ''}
+                                      isClickable={true}
+                                      onProfileClick={() => {
+                                        navigate(`/profile/${task.createdBy._id}`);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        } else if (availableSpots <= 0) {
+                          return (
+                            <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                              <span className="text-gray-600 font-medium">Task is full - All volunteers accepted</span>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="mt-4">
+                              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-sm text-blue-700">
+                                  <span className="font-medium">{availableSpots}</span> spot{availableSpots !== 1 ? 's' : ''} still available
+                                </p>
+                              </div>
+                              <button 
+                                className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                                onClick={() => handleAccept(task._id)} 
+                                disabled={accepting === task._id}
+                              >
+                                {accepting === task._id ? 'Accepting...' : 'Accept Task'}
+                              </button>
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                  ))}
                 </div>
-                <p className="text-gray-700 mb-3">{task.description}</p>
-                
+              </div>
+            )}
+
+            {/* Donor Tasks */}
+            {tasks.filter(task => task.taskCategory === 'Donor').length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center">
+                  🫀 Donor Tasks
+                  <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+                    {tasks.filter(task => task.taskCategory === 'Donor').length}
+                  </span>
+                </h3>
+                <div className="space-y-4">
+                  {tasks.filter(task => task.taskCategory === 'Donor').map(task => (
+                    <div key={task._id} className="border border-green-200 rounded-lg p-4 shadow-sm bg-green-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold text-green-700">{task.title}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          task.urgency === 'Emergency' ? 'bg-red-100 text-red-800' :
+                          task.urgency === 'Urgent' ? 'bg-orange-100 text-orange-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.urgency}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 mb-3">{task.description}</p>
+                      
+                      <AddressDisplay
+                        address={task.location?.address}
+                        lat={task.location?.lat}
+                        lng={task.location?.lng}
+                      />
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Start Time:</span>
+                          <p className="text-gray-700">{task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                        </div>
+                        {task.endTime && (
+                          <div>
+                            <span className="text-gray-500">End Time:</span>
+                            <p className="text-gray-700">{new Date(task.endTime).toLocaleString()}</p>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-500">Volunteers:</span>
+                          <p className="text-gray-700">{task.acceptedCount || 0} / {task.peopleNeeded}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Amount:</span>
+                          <p className="text-gray-700">₹{task.amount?.toFixed(2) || '0.00'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Task Status and Actions */}
+                      {(() => {
+                        const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId);
+                        const availableSpots = (task.peopleNeeded || 0) - (task.acceptedCount || 0);
+
+                        if (currentUserAccepted) {
+                          return (
+                            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <p className="text-green-700 font-bold mb-2">✅ You have accepted this task!</p>
+                              {task.createdBy && (
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-2">Task Created By:</p>
+                                  <div className="border border-gray-200 rounded-lg p-3 bg-white">
+                                    <PublicProfile
+                                      userId={task.createdBy._id || ''}
+                                      userName={task.createdBy.name || 'Unknown User'}
+                                      userEmail={task.createdBy.email || ''}
+                                      isClickable={true}
+                                      onProfileClick={() => {
+                                        navigate(`/profile/${task.createdBy._id}`);
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        } else if (availableSpots <= 0) {
+                          return (
+                            <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                              <span className="text-gray-600 font-medium">Task is full - All volunteers accepted</span>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="mt-4">
+                              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-sm text-blue-700">
+                                  <span className="font-medium">{availableSpots}</span> spot{availableSpots !== 1 ? 's' : ''} still available
+                                </p>
+                              </div>
+                              <button 
+                                className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                                onClick={() => handleAccept(task._id)} 
+                                disabled={accepting === task._id}
+                              >
+                                {accepting === task._id ? 'Accepting...' : 'Accept Task'}
+                              </button>
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* General and Other Tasks */}
+            {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center">
+                  📋 General & Other Tasks
+                  <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                    {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length}
+                  </span>
+                </h3>
+                <div className="space-y-4">
+                  {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').map(task => (
+              <div key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold text-blue-700">{task.title}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          task.urgency === 'Emergency' ? 'bg-red-100 text-red-800' :
+                          task.urgency === 'Urgent' ? 'bg-orange-100 text-orange-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {task.urgency}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 mb-3">{task.description}</p>
+                      
                 <AddressDisplay
                   address={task.location?.address}
                   lat={task.location?.lat}
                   lng={task.location?.lng}
                 />
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
-                  <div>
-                    <span className="text-gray-500">Start Time:</span>
-                    <p className="text-gray-700">{task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
-                  </div>
-                  {task.endTime && (
-                    <div>
-                      <span className="text-gray-500">End Time:</span>
-                      <p className="text-gray-700">{new Date(task.endTime).toLocaleString()}</p>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-gray-500">Volunteers:</span>
-                    <p className="text-gray-700">{task.acceptedCount || 0} / {task.peopleNeeded}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Amount:</span>
-                    <p className="text-gray-700">₹{task.amount?.toFixed(2) || '0.00'}</p>
-                  </div>
-                </div>
-                
-                {/* Task Status and Actions */}
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                        <div>
+                          <span className="text-gray-500">Start Time:</span>
+                          <p className="text-gray-700">{task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                        </div>
+                        {task.endTime && (
+                          <div>
+                            <span className="text-gray-500">End Time:</span>
+                            <p className="text-gray-700">{new Date(task.endTime).toLocaleString()}</p>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-500">Volunteers:</span>
+                          <p className="text-gray-700">{task.acceptedCount || 0} / {task.peopleNeeded}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Amount:</span>
+                          <p className="text-gray-700">₹{task.amount?.toFixed(2) || '0.00'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Task Status and Actions */}
                 {(() => {
                   const currentUserAccepted = task.acceptedBy && userId && task.acceptedBy.some((vol: IFrontendUser) => vol._id === userId);
-                  const availableSpots = (task.peopleNeeded || 0) - (task.acceptedCount || 0);
+                        const availableSpots = (task.peopleNeeded || 0) - (task.acceptedCount || 0);
 
                   if (currentUserAccepted) {
                     return (
-                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-green-700 font-bold mb-2">✅ You have accepted this task!</p>
+                            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <p className="text-green-700 font-bold mb-2">✅ You have accepted this task!</p>
                         {task.createdBy && (
-                          <div>
-                            <p className="text-sm text-gray-600 mb-2">Task Created By:</p>
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-2">Task Created By:</p>
                             <div className="border border-gray-200 rounded-lg p-3 bg-white">
                               <PublicProfile
                                 userId={task.createdBy._id || ''}
@@ -270,35 +492,46 @@ const VolunteerDashboard: React.FC = () => {
                             </div>
                           </div>
                         )}
-                      </div>
-                    );
-                  } else if (availableSpots <= 0) {
-                    return (
-                      <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                        <span className="text-gray-600 font-medium">Task is full - All volunteers accepted</span>
-                      </div>
-                    );
+                            </div>
+                          );
+                        } else if (availableSpots <= 0) {
+                          return (
+                            <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                              <span className="text-gray-600 font-medium">Task is full - All volunteers accepted</span>
+                            </div>
+                          );
                   } else {
                     return (
-                      <div className="mt-4">
-                        <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-700">
-                            <span className="font-medium">{availableSpots}</span> spot{availableSpots !== 1 ? 's' : ''} still available
-                          </p>
-                        </div>
-                        <button 
-                          className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" 
-                          onClick={() => handleAccept(task._id)} 
-                          disabled={accepting === task._id}
-                        >
-                          {accepting === task._id ? 'Accepting...' : 'Accept Task'}
-                        </button>
-                      </div>
+                            <div className="mt-4">
+                              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-sm text-blue-700">
+                                  <span className="font-medium">{availableSpots}</span> spot{availableSpots !== 1 ? 's' : ''} still available
+                                </p>
+                              </div>
+                              <button 
+                                className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                                onClick={() => handleAccept(task._id)} 
+                                disabled={accepting === task._id}
+                              >
+                        {accepting === task._id ? 'Accepting...' : 'Accept Task'}
+                      </button>
+                            </div>
                     );
                   }
                 })()}
               </div>
             ))}
+                </div>
+              </div>
+            )}
+
+            {/* No Tasks Message */}
+            {tasks.length === 0 && !loading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">No tasks available at the moment.</p>
+                <p className="text-gray-400 text-sm mt-2">Check back later for new volunteer opportunities!</p>
+              </div>
+            ) : null}
           </div>
         </section>
         
@@ -339,21 +572,22 @@ const VolunteerDashboard: React.FC = () => {
               <label className="block font-medium text-gray-700 mb-1">Location:</label>
               <input type="text" name="location" value={profile?.location || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
             </div>
+            <div>
+              <label className="block font-medium text-gray-700 mb-1">Aadhaar Number:</label>
+              <input 
+                type="text" 
+                name="aadhaar" 
+                value={profile?.aadhaar || ''} 
+                onChange={handleProfileChange} 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                placeholder="123456789012"
+                readOnly
+              />
+              <small className="text-gray-500 block mt-1">Aadhaar number cannot be changed</small>
+            </div>
                          <div>
                <label className="block font-medium text-gray-700 mb-1">Skills / Interests:</label>
                <input type="text" name="skills" value={profile?.skills || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
-             </div>
-             <div>
-               <label className="block font-medium text-gray-700 mb-1">Profile Picture:</label>
-               {profile?.profilePicture && (
-                 <div className="mt-2">
-                   <img 
-                     src={profile.profilePicture} 
-                     alt="Profile Preview" 
-                     className="w-20 h-20 object-cover rounded-lg border"
-                   />
-                 </div>
-               )}
              </div>
              <div>
                <label className="block font-medium text-gray-700 mb-1">About:</label>

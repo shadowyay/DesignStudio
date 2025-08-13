@@ -4,7 +4,7 @@ export interface ITask extends Document {
   title: string;
   description: string;
   peopleNeeded: number;
-  urgency: 'Normal' | 'Emergency';
+  urgency: 'Normal' | 'Urgent' | 'Emergency';
   createdBy: mongoose.Types.ObjectId;
   location: {
     address: string;
@@ -17,6 +17,7 @@ export interface ITask extends Document {
   acceptedBy: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
+  taskCategory: 'General' | 'Donor' | 'Blood Emergency' | 'Other';
 }
 
 const TaskSchema: Schema = new Schema({
@@ -33,7 +34,8 @@ const TaskSchema: Schema = new Schema({
   approxStartTime: { type: Date },
   endTime: { type: Date },
   amount: { type: Number, required: true },
-  acceptedBy: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] }
+  acceptedBy: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
+  taskCategory: { type: String, enum: ['General', 'Donor', 'Blood Emergency', 'Other'], default: 'General' }
 }, { timestamps: true });
 
 export default mongoose.model<ITask>('Task', TaskSchema);

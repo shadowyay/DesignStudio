@@ -28,6 +28,7 @@ export interface ICreateTaskData {
   approxStartTime?: string;
   endTime?: string;
   amount: number;
+  taskCategory: 'General' | 'Donor' | 'Blood Emergency' | 'Other';
 }
 
 export interface IFrontendTask {
@@ -50,6 +51,7 @@ export interface IFrontendTask {
   isFull?: boolean; // Make optional
   createdAt?: string; // Make optional
   updatedAt?: string; // Make optional
+  taskCategory: 'General' | 'Donor' | 'Blood Emergency' | 'Other';
 }
 
 export interface RegisterData {

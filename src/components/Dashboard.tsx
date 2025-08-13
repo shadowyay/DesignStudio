@@ -164,7 +164,7 @@ const Dashboard: React.FC = () => {
       // Fallback: open form without location
       setShowForm(true);
       setEditingTask(null);
-      setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
+      setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0, taskCategory: 'General' });
       setMarkerPosition(null);
     } finally {
       setLocationLoading(false);
@@ -332,7 +332,7 @@ const Dashboard: React.FC = () => {
                 // Cancel form
                 setShowForm(false);
                 setEditingTask(null);
-                setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0 });
+                setNewTask({ title: '', description: '', location: { address: '', lat: 0, lng: 0 }, peopleNeeded: 1, approxStartTime: '', endTime: '', urgency: 'Normal', amount: 0, taskCategory: 'General' });
                 setMarkerPosition(null);
               } else {
                 // Open form with current location
@@ -435,6 +435,22 @@ const Dashboard: React.FC = () => {
                     <option>Emergency</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Task Category:</label>
+                  <select value={editingTask ? editingTask.taskCategory : newTask.taskCategory} onChange={e => {
+                      const taskCategory = e.target.value as 'General' | 'Donor' | 'Blood Emergency' | 'Other';
+                      if (editingTask) {
+                        setEditingTask({ ...editingTask, taskCategory: taskCategory });
+                      } else {
+                        setNewTask({ ...newTask, taskCategory: taskCategory });
+                      }
+                    }} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
+                    <option value="General">General</option>
+                    <option value="Donor">Donor</option>
+                    <option value="Blood Emergency">Blood Emergency</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>
               {loading ? 'Saving...' : (editingTask ? 'Update Task' : 'Create Task')}
@@ -451,50 +467,198 @@ const Dashboard: React.FC = () => {
           <div className="bg-white p-8 rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold text-blue-700 mb-6">Tasks Posted by You</h2>
         {loading ? <p>Loading tasks...</p> : (
-          <ul className="space-y-4">
-            {tasks.map(task => (
-              <li key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
-                <h3 className="text-lg font-bold text-blue-700">{task.title}</h3>
-                <p className="text-gray-700 my-1">{task.description}</p>
-                <AddressDisplay
-                  address={task.location?.address}
-                  lat={task.location?.lat}
-                  lng={task.location?.lng}
-                />
-                <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
-                {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
-                <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
-                <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
-                <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
-                                 {task.acceptedBy && task.acceptedBy.length > 0 && (
-                   <div className="mt-4">
-                     <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
-                     <div className="space-y-3">
-                       {task.acceptedBy.map((volunteer: IFrontendUser) => (
-                         <div key={volunteer._id} className="border border-gray-200 rounded-lg p-3 bg-white">
-                           <PublicProfile
-                             userId={volunteer._id || ''}
-                             userName={volunteer.name || 'Unknown User'}
-                             userEmail={volunteer.email || ''}
-                             isClickable={true}
-                             onProfileClick={() => {
-                               navigate(`/profile/${volunteer._id}`);
-                             }}
-                           />
-                         </div>
-                       ))}
-                     </div>
-                   </div>
-                 )}
-                {(!task.acceptedCount || task.acceptedCount === 0) && (
-                <div className="flex space-x-2 mt-4">
-                  <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
-                  <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
-                </div>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+            {/* Blood Emergency Tasks */}
+            {tasks.filter(task => task.taskCategory === 'Blood Emergency').length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center">
+                  🩸 Blood Emergency Tasks
+                  <span className="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm">
+                    {tasks.filter(task => task.taskCategory === 'Blood Emergency').length}
+                  </span>
+                </h3>
+                <ul className="space-y-4">
+                  {tasks.filter(task => task.taskCategory === 'Blood Emergency').map(task => (
+                    <li key={task._id} className="border border-red-200 rounded-lg p-4 shadow-sm bg-red-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold text-red-700">{task.title}</h4>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          {task.urgency}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 my-1">{task.description}</p>
+                      <AddressDisplay
+                        address={task.location?.address}
+                        lat={task.location?.lat}
+                        lng={task.location?.lng}
+                      />
+                      <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                      {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
+                      <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
+                      <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
+                      <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
+                      {task.acceptedBy && task.acceptedBy.length > 0 && (
+                        <div className="mt-4">
+                          <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
+                          <div className="space-y-3">
+                            {task.acceptedBy.map((volunteer: IFrontendUser) => (
+                              <div key={volunteer._id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                                <PublicProfile
+                                  userId={volunteer._id || ''}
+                                  userName={volunteer.name || 'Unknown User'}
+                                  userEmail={volunteer.email || ''}
+                                  isClickable={true}
+                                  onProfileClick={() => {
+                                    navigate(`/profile/${volunteer._id}`);
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(!task.acceptedCount || task.acceptedCount === 0) && (
+                        <div className="flex space-x-2 mt-4">
+                          <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
+                          <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Donor Tasks */}
+            {tasks.filter(task => task.taskCategory === 'Donor').length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center">
+                  🫀 Donor Tasks
+                  <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+                    {tasks.filter(task => task.taskCategory === 'Donor').length}
+                  </span>
+                </h3>
+                <ul className="space-y-4">
+                  {tasks.filter(task => task.taskCategory === 'Donor').map(task => (
+                    <li key={task._id} className="border border-green-200 rounded-lg p-4 shadow-sm bg-green-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold text-green-700">{task.title}</h4>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {task.urgency}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 my-1">{task.description}</p>
+                      <AddressDisplay
+                        address={task.location?.address}
+                        lat={task.location?.lat}
+                        lng={task.location?.lng}
+                      />
+                      <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                      {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
+                      <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
+                      <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
+                      <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
+                      {task.acceptedBy && task.acceptedBy.length > 0 && (
+                        <div className="mt-4">
+                          <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
+                          <div className="space-y-3">
+                            {task.acceptedBy.map((volunteer: IFrontendUser) => (
+                              <div key={volunteer._id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                                <PublicProfile
+                                  userId={volunteer._id || ''}
+                                  userName={volunteer.name || 'Unknown User'}
+                                  userEmail={volunteer.email || ''}
+                                  isClickable={true}
+                                  onProfileClick={() => {
+                                    navigate(`/profile/${volunteer._id}`);
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(!task.acceptedCount || task.acceptedCount === 0) && (
+                        <div className="flex space-x-2 mt-4">
+                          <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
+                          <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* General and Other Tasks */}
+            {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center">
+                  📋 General & Other Tasks
+                  <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                    {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').length}
+                  </span>
+                </h3>
+                <ul className="space-y-4">
+                  {tasks.filter(task => task.taskCategory === 'General' || task.taskCategory === 'Other').map(task => (
+                    <li key={task._id} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-lg font-bold text-blue-700">{task.title}</h4>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {task.urgency}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 my-1">{task.description}</p>
+                      <AddressDisplay
+                        address={task.location?.address}
+                        lat={task.location?.lat}
+                        lng={task.location?.lng}
+                      />
+                      <p className="text-sm text-gray-500"><b>Approx. Start Time:</b> {task.approxStartTime ? new Date(task.approxStartTime).toLocaleString() : 'N/A'}</p>
+                      {task.endTime && <p className="text-sm text-gray-500"><b>End Time:</b> {new Date(task.endTime).toLocaleString()}</p>}
+                      <p className="text-sm text-gray-500"><b>Volunteers Needed:</b> {task.peopleNeeded}</p>
+                      <p className="text-sm text-gray-500"><b>Accepted Volunteers:</b> {task.acceptedCount} / {task.peopleNeeded}</p>
+                      <p className="text-sm text-gray-500"><b>Amount:</b> ₹{task.amount?.toFixed(2) || '0.00'}</p>
+                      {task.acceptedBy && task.acceptedBy.length > 0 && (
+                        <div className="mt-4">
+                          <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
+                          <div className="space-y-3">
+                            {task.acceptedBy.map((volunteer: IFrontendUser) => (
+                              <div key={volunteer._id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                                <PublicProfile
+                                  userId={volunteer._id || ''}
+                                  userName={volunteer.name || 'Unknown User'}
+                                  userEmail={volunteer.email || ''}
+                                  isClickable={true}
+                                  onProfileClick={() => {
+                                    navigate(`/profile/${volunteer._id}`);
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(!task.acceptedCount || task.acceptedCount === 0) && (
+                        <div className="flex space-x-2 mt-4">
+                          <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
+                          <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* No Tasks Message */}
+            {tasks.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">No tasks posted yet.</p>
+                <p className="text-gray-400 text-sm mt-2">Create your first task to get started!</p>
+              </div>
+            )}
+          </>
         )}
       </div>
         </>
@@ -588,6 +752,19 @@ const Dashboard: React.FC = () => {
                 />
               </div>
               <div>
+                <label className="block font-medium text-gray-700 mb-1">Aadhaar Number:</label>
+                <input 
+                  type="text" 
+                  name="aadhaar" 
+                  value={profile.aadhaar || ''} 
+                  onChange={handleProfileChange} 
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+                  placeholder="123456789012"
+                  readOnly
+                />
+                <small className="text-gray-500 block mt-1">Aadhaar number cannot be changed</small>
+              </div>
+              <div>
                 <label className="block font-medium text-gray-700 mb-1">About:</label>
                 <textarea 
                   name="about" 
@@ -619,6 +796,10 @@ const Dashboard: React.FC = () => {
                <div>
                  <label className="block font-medium text-gray-700 mb-1">User ID:</label>
                  <p className="text-gray-900">{localStorage.getItem('userId') || 'Not set'}</p>
+               </div>
+               <div>
+                 <label className="block font-medium text-gray-700 mb-1">Aadhaar Number:</label>
+                 <p className="text-gray-900">{profile?.aadhaar || 'Not provided'}</p>
                </div>
              </div>
           )}
