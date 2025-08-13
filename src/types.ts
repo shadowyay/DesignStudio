@@ -1,17 +1,18 @@
 export interface IFrontendUser {
-  _id?: string; 
-  name?: string;
-  email?: string;
+  _id: string;
+  name: string;
+  email: string;
   phone?: string;
-  dob?: string; // Assuming DOB comes as a string from the API for simplicity in frontend
+  dob?: string;
   location?: string;
-  role?: 'user' | 'volunteer';
-  skills?: string;
+  role: 'user' | 'volunteer';
+  skills?: string[];
   openToAnything?: boolean;
   profilePicture?: string;
   about?: string;
-  gender?: 'male' | 'female' | 'rather not say';
+  gender?: string;
   aadhaar?: string;
+  isEmailVerified?: boolean;
 }
 
 export interface ICreateTaskData {

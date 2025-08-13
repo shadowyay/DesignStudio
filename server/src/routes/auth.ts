@@ -1,44 +1,59 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
+import { register, login, verifyEmail, resendVerificationEmail } from '../controllers/userController';
 
 const router = express.Router();
 
-// Register
+// Register route
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender, aadhaar } = req.body;
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'Email already exists' });
-    
-    // Check if Aadhaar already exists only if Aadhaar is provided
-    if (aadhaar) {
-      const existingAadhaar = await User.findOne({ aadhaar });
-      if (existingAadhaar) return res.status(400).json({ message: 'Aadhaar number already registered' });
-    }
-    
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender, aadhaar });
-    await user.save();
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err });
+    const result = await register(req.body);
+    res.status(201).json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
   }
 });
 
-// Login
+// Login route
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
-    res.json({ token, user });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err });
+    const result = await login(email, password);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Verify email route
+router.get('/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ message: 'Invalid verification token' });
+    }
+    
+    const result = await verifyEmail(token);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Resend verification email route
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    
+    const result = await resendVerificationEmail(email);
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
   }
 });
 

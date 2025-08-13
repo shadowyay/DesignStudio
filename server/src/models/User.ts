@@ -4,32 +4,38 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  phone: string;
-  dob: Date;
-  location: string;
+  phone?: string;
+  dob?: string;
+  location?: string;
   role: 'user' | 'volunteer';
-  skills?: string;
+  skills?: string[];
   openToAnything?: boolean;
   profilePicture?: string;
   about?: string;
-  gender: 'male' | 'female' | 'rather not say';
+  gender?: string;
   aadhaar?: string; // Made optional to handle existing users
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
 }
 
 const UserSchema: Schema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phone: { type: String, required: true },
-  dob: { type: Date, required: true },
-  location: { type: String, required: true },
-  role: { type: String, enum: ['user', 'volunteer'], default: 'user' },
-  skills: { type: String },
-  openToAnything: { type: Boolean, default: false },
+  phone: { type: String },
+  dob: { type: String },
+  location: { type: String },
+  role: { type: String, enum: ['user', 'volunteer'], required: true },
+  skills: { type: [String] },
+  openToAnything: { type: Boolean },
   profilePicture: { type: String },
   about: { type: String },
-  gender: { type: String, enum: ['male', 'female', 'rather not say'] },
-  aadhaar: { type: String, unique: true, sparse: true } // Made optional and added sparse index for unique constraint
-});
+  gender: { type: String },
+  aadhaar: { type: String, unique: true, sparse: true }, // Made optional and added sparse index for unique constraint
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
+  emailVerificationExpires: { type: Date }
+}, { timestamps: true });
 
 export default mongoose.model<IUser>('User', UserSchema);

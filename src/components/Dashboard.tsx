@@ -345,6 +345,35 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Task Category Tips */}
+      {!showProfile && !showForm && (
+        <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">📝 Task Creation Tips</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-2xl mb-2">🩸</div>
+              <h4 className="font-bold text-red-700 mb-2">Blood Emergency</h4>
+              <p className="text-sm text-red-600 mb-2">Use for urgent blood donation requests, medical emergencies, or life-threatening situations.</p>
+              <p className="text-xs text-red-500">Set urgency to "Emergency" for immediate attention.</p>
+            </div>
+            
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="text-2xl mb-2">🫀</div>
+              <h4 className="font-bold text-green-700 mb-2">Donor Tasks</h4>
+              <p className="text-sm text-green-600 mb-2">Use for blood donation drives, organ donor requests, or regular donation needs.</p>
+              <p className="text-xs text-green-500">Set urgency based on timeline requirements.</p>
+            </div>
+            
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-2xl mb-2">📋</div>
+              <h4 className="font-bold text-blue-700 mb-2">General Tasks</h4>
+              <p className="text-sm text-blue-600 mb-2">Use for community service, events, help requests, or other volunteer opportunities.</p>
+              <p className="text-xs text-blue-500">Most flexible category for various needs.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!showProfile && showForm && (
         <div ref={formRef} className="bg-white p-8 rounded-2xl shadow-lg mb-8">
           <h2 className="text-2xl font-bold text-blue-700 mb-6">{editingTask ? 'Edit Task' : 'Create New Task'}</h2>

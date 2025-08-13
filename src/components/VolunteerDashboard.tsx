@@ -169,15 +169,50 @@ const VolunteerDashboard: React.FC = () => {
         showProfile={showProfile}
       />
       <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
+      <div className="bg-white p-8 rounded-2xl shadow-lg">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName') || 'Volunteer'}</h1>
-        <button
-          onClick={refreshTasks}
-          disabled={loading}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Refreshing...' : '🔄 Refresh Tasks'}
-        </button>
+            <h2 className="text-2xl font-bold text-blue-700">Available Tasks</h2>
+            <button
+              onClick={refreshTasks}
+              disabled={loading}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Refreshing...' : '🔄 Refresh Tasks'}
+            </button>
+          </div>
+
+          {/* Task Category Navigation */}
+          <div className="mb-8 p-4 bg-gray-50 rounded-lg border">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Browse Tasks by Category:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                onClick={() => navigate('/blood-emergency')}
+                className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition text-left"
+              >
+                <div className="text-2xl mb-2">🩸</div>
+                <h4 className="font-bold text-red-700">Blood Emergency</h4>
+                <p className="text-sm text-red-600">Urgent blood donation requests</p>
+              </button>
+              
+              <button
+                onClick={() => navigate('/donor')}
+                className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition text-left"
+              >
+                <div className="text-2xl mb-2">🫀</div>
+                <h4 className="font-bold text-green-700">Donor Tasks</h4>
+                <p className="text-sm text-green-600">Blood donation opportunities</p>
+              </button>
+              
+              <button
+                onClick={() => navigate('/general-tasks')}
+                className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition text-left"
+              >
+                <div className="text-2xl mb-2">📋</div>
+                <h4 className="font-bold text-blue-700">General Tasks</h4>
+                <p className="text-sm text-blue-600">Community service opportunities</p>
+              </button>
+            </div>
+          </div>
       </div>
       {!showProfile ? (
         <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">

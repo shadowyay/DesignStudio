@@ -87,8 +87,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
       };
       const res = await register(data);
       if (res.message && res.message.includes('success')) {
-        setShowRegister(false);
+        // Show success message for email verification
         setError('');
+        // Clear form after successful registration
+        setName('');
+        setDob('');
+        setEmail('');
+        setPhone('');
+        setPassword('');
+        setLocation('');
+        setAbout('');
+        setGender('');
+        setAadhaar('');
+        // Show registration form with success message
+        setShowRegister(true);
       } else {
         setError(res.message || 'Registration failed');
       }
@@ -178,24 +190,32 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
             </div>
             <div>
               <label className="block font-medium text-gray-700 mb-1">Aadhaar Number (Optional):</label>
-              <input 
-                type="text" 
-                name="aadhaar" 
-                pattern="[0-9]{12}" 
-                title="Enter a 12-digit Aadhaar number" 
-                value={aadhaar} 
-                onChange={e => setAadhaar(e.target.value)} 
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" 
+              <input
+                type="text"
+                name="aadhaar"
+                pattern="[0-9]{12}"
+                title="Enter a 12-digit Aadhaar number"
+                value={aadhaar}
+                onChange={e => setAadhaar(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
                 placeholder="123456789012"
               />
               <small className="text-gray-500 block mt-1">Enter your 12-digit Aadhaar number (optional for now)</small>
             </div>
-            <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Registering...' : 'Register'}</button>
+            <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Creating account...' : 'Create Account'}</button>
           </form>
           {error && <p className="text-red-500 mt-4">{error}</p>}
+          {!error && !loading && name === '' && email === '' && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <h3 className="text-green-800 font-semibold mb-2">✅ Registration Successful!</h3>
+              <p className="text-green-700 text-sm">
+                Please check your email inbox for a verification link. Click the link to verify your account before logging in.
+              </p>
+            </div>
+          )}
           <p className="mt-4 text-gray-600">
             Already have an account?{' '}
-            <a href="#" className="text-blue-600 hover:underline" onClick={e => {e.preventDefault(); setShowRegister(false);}}>Back to Login</a>
+            <a href="#" className="text-blue-600 hover:underline" onClick={e => {e.preventDefault(); setShowRegister(false);}}>Login here</a>
           </p>
         </section>
       )}
