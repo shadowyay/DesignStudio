@@ -189,7 +189,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
               />
             </div>
             <div>
-              <label className="block font-medium text-gray-700 mb-1">Aadhaar Number (Optional):</label>
+              <label className="block font-medium text-gray-700 mb-1">Aadhaar Number:</label>
               <input
                 type="text"
                 name="aadhaar"
@@ -197,10 +197,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
                 title="Enter a 12-digit Aadhaar number"
                 value={aadhaar}
                 onChange={e => setAadhaar(e.target.value)}
+                required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
                 placeholder="123456789012"
               />
-              <small className="text-gray-500 block mt-1">Enter your 12-digit Aadhaar number (optional for now)</small>
+              <small className="text-gray-500 block mt-1">Enter your 12-digit Aadhaar number</small>
             </div>
             <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>{loading ? 'Creating account...' : 'Create Account'}</button>
           </form>

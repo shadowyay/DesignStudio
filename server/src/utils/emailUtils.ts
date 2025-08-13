@@ -3,6 +3,23 @@ import crypto from 'crypto';
 
 // Create transporter for sending emails
 const createTransporter = () => {
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
+  const secure = process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : undefined;
+
+  if (host) {
+    return nodemailer.createTransport({
+      host,
+      port: port || 465,
+      secure: typeof secure === 'boolean' ? secure : true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      }
+    });
+  }
+
+  // Fallback to Gmail service if explicit SMTP host is not provided
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -21,8 +38,10 @@ export const generateVerificationToken = (): string => {
 export const sendVerificationEmail = async (email: string, token: string, name: string) => {
   try {
     const transporter = createTransporter();
-    
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
+
+    const frontendBase = process.env.FRONTEND_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
+    const verificationUrl = `${frontendBase}/verify-email?token=${token}`;
     
     const mailOptions = {
       from: process.env.SMTP_USER || 'your-email@gmail.com',
@@ -89,6 +108,8 @@ export const sendVerificationEmail = async (email: string, token: string, name: 
 export const sendVerificationSuccessEmail = async (email: string, name: string) => {
   try {
     const transporter = createTransporter();
+    const frontendBase = process.env.FRONTEND_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
     
     const mailOptions = {
       from: process.env.SMTP_USER || 'your-email@gmail.com',
@@ -110,7 +131,7 @@ export const sendVerificationSuccessEmail = async (email: string, name: string) 
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/user/auth" 
+              <a href="${frontendBase}/user/auth" 
                  style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                         color: white; 
                         padding: 15px 30px; 

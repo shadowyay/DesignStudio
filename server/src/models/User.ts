@@ -13,7 +13,7 @@ export interface IUser extends Document {
   profilePicture?: string;
   about?: string;
   gender?: string;
-  aadhaar?: string; // Made optional to handle existing users
+  aadhaar: string;
   isEmailVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
@@ -32,7 +32,7 @@ const UserSchema: Schema = new Schema({
   profilePicture: { type: String },
   about: { type: String },
   gender: { type: String },
-  aadhaar: { type: String, unique: true, sparse: true }, // Made optional and added sparse index for unique constraint
+  aadhaar: { type: String, required: true, unique: true },
   isEmailVerified: { type: Boolean, default: false },
   emailVerificationToken: { type: String },
   emailVerificationExpires: { type: Date }

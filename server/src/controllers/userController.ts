@@ -19,6 +19,10 @@ interface IUserUpdate {
 
 export const register = async (userData: any) => {
   const { name, email, password, phone, dob, location, role, skills, openToAnything, profilePicture, about, gender, aadhaar } = userData;
+
+  if (!aadhaar || !/^[0-9]{12}$/.test(aadhaar)) {
+    throw new Error('Aadhaar is required and must be a 12-digit number');
+  }
   
   // Check if user already exists
   const existingUser = await User.findOne({ email });
@@ -26,12 +30,10 @@ export const register = async (userData: any) => {
     throw new Error('Email already exists');
   }
 
-  // Check if Aadhaar already exists only if Aadhaar is provided
-  if (aadhaar) {
-    const existingAadhaar = await User.findOne({ aadhaar });
-    if (existingAadhaar) {
-      throw new Error('Aadhaar number already registered');
-    }
+  // Check if Aadhaar already exists
+  const existingAadhaar = await User.findOne({ aadhaar });
+  if (existingAadhaar) {
+    throw new Error('Aadhaar number already registered');
   }
 
   // Hash password

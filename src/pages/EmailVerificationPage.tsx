@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import { API_URL } from '../api';
@@ -11,7 +11,11 @@ const EmailVerificationPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
 
+  const hasAttemptedVerifyRef = useRef(false);
+
   useEffect(() => {
+    if (hasAttemptedVerifyRef.current) return;
+    hasAttemptedVerifyRef.current = true;
     const token = searchParams.get('token');
     if (token) {
       verifyEmail(token);
@@ -19,7 +23,8 @@ const EmailVerificationPage: React.FC = () => {
       setVerificationStatus('error');
       setMessage('Invalid verification link. Please check your email for the correct link.');
     }
-  }, [searchParams]);
+    // Intentionally empty dependency array to run once on mount
+  }, []);
 
   const verifyEmail = async (token: string) => {
     try {

@@ -11,7 +11,7 @@ export interface IFrontendUser {
   profilePicture?: string;
   about?: string;
   gender?: string;
-  aadhaar?: string;
+  aadhaar: string;
   isEmailVerified?: boolean;
 }
 
@@ -66,7 +66,7 @@ export interface RegisterData {
   about?: string;
   role: 'user' | 'volunteer';
   gender?: 'male' | 'female' | 'rather not say';
-  aadhaar?: string; // Made optional to handle existing users
+  aadhaar: string;
 }
 
 export interface LocationData {
