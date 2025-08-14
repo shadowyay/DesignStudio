@@ -200,3 +200,11 @@ export const updateUserProfile = async (userId: string, updateData: IUserUpdate)
   
   return updatedUser;
 }; 
+
+export const deleteUserById = async (userId: string) => {
+  const deleted = await User.findByIdAndDelete(userId);
+  if (!deleted) {
+    throw new Error('User not found');
+  }
+  return { message: 'Account deleted successfully' };
+};

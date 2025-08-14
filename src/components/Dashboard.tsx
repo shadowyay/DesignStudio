@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createTask, getTasksByUser, deleteTask, getUserProfile, updateUserProfile, updateTask } from '../api';
+import { createTask, getTasksByUser, deleteTask, getUserProfile, updateUserProfile, updateTask, deleteAccount } from '../api';
 import LocationMap from './LocationMap';
 import LocationPicker from './LocationPicker';
 import AddressDisplay from './AddressDisplay';
@@ -729,6 +729,7 @@ const Dashboard: React.FC = () => {
           {profileMessage && <p className="text-green-600 mt-2">{profileMessage}</p>}
           
           {profile ? (
+            <>
             <form onSubmit={handleProfileSubmit} className="space-y-4">
               {/* Profile Picture Section - Moved to top */}
               <div className="text-center mb-6">
@@ -839,6 +840,38 @@ const Dashboard: React.FC = () => {
                 {profileLoading ? 'Updating...' : 'Update Profile'}
               </button>
             </form>
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Delete Account</h3>
+              <button
+                className="w-full py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
+                onClick={async () => {
+                  if (!profile) return;
+                  const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+                  if (!confirmed) return;
+                  const userId = localStorage.getItem('userId');
+                  const token = localStorage.getItem('token');
+                  if (!userId || !token) {
+                    setProfileError('Not authenticated. Please log in again.');
+                    return;
+                  }
+                  try {
+                    await deleteAccount(userId, token);
+                    // Clear local storage and redirect
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('aadhaar');
+                    navigate('/');
+                  } catch (_err) {
+                    setProfileError('Failed to delete account.');
+                  }
+                }}
+              >
+                Delete Account
+              </button>
+            </div>
+            </>
           ) : (
                          <div className="space-y-4">
                <div>

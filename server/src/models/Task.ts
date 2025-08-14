@@ -38,4 +38,8 @@ const TaskSchema: Schema = new Schema({
   taskCategory: { type: String, enum: ['General', 'Donor', 'Blood Emergency', 'Other'], default: 'General' }
 }, { timestamps: true });
 
+// Automatically delete tasks when their endTime passes
+// TTL index checks approximately every minute
+TaskSchema.index({ endTime: 1 }, { expireAfterSeconds: 0 });
+
 export default mongoose.model<ITask>('Task', TaskSchema);

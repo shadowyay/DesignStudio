@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTasks, acceptTask, getUserProfile, updateUserProfile } from '../api';
+import { getTasks, acceptTask, getUserProfile, updateUserProfile, deleteAccount } from '../api';
 import AddressDisplay from './AddressDisplay';
 import PublicProfile from './PublicProfile';
 import type { IFrontendUser, IFrontendTask } from '../types';
@@ -684,6 +684,35 @@ const VolunteerDashboard: React.FC = () => {
               {profileLoading ? 'Updating...' : 'Update Profile'}
             </button>
           </form>
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Delete Account</h3>
+            <button
+              className="w-full py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
+              onClick={async () => {
+                const uid = localStorage.getItem('userId');
+                const tok = localStorage.getItem('token');
+                if (!uid || !tok) {
+                  setProfileError('Not authenticated. Please log in again.');
+                  return;
+                }
+                const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+                if (!confirmed) return;
+                try {
+                  await deleteAccount(uid, tok);
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('userId');
+                  localStorage.removeItem('userName');
+                  localStorage.removeItem('userEmail');
+                  localStorage.removeItem('aadhaar');
+                  navigate('/');
+                } catch (_err) {
+                  setProfileError('Failed to delete account.');
+                }
+              }}
+            >
+              Delete Account
+            </button>
+          </div>
         </section>
       )}
 

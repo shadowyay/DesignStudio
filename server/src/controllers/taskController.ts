@@ -64,7 +64,18 @@ export const updateTask = async (taskId: string, updateData: Partial<Omit<ITask,
 };
 
 export const getTasks = async (filter: FilterQuery<ITask> = {}) => {
-  const tasks = await Task.find(filter)
+  // Hide expired tasks immediately even before TTL deletion happens
+  const now = new Date();
+  const effectiveFilter: FilterQuery<ITask> = {
+    ...filter,
+    $or: [
+      { endTime: { $exists: false } },
+      { endTime: { $eq: null } },
+      { endTime: { $gt: now } },
+    ],
+  };
+
+  const tasks = await Task.find(effectiveFilter)
     .populate('createdBy', 'name email')
     .populate('acceptedBy', 'name email');
   

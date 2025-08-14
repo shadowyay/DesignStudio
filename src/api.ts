@@ -92,6 +92,16 @@ export async function updateUserProfile(userId: string, data: IFrontendUser, tok
   return res.json();
 }
 
+export async function deleteAccount(userId: string, token: string) {
+  const res = await fetch(`${API_URL}/user/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return res.json();
+}
+
 export async function uploadProfilePicture(file: File, token: string) {
   const formData = new FormData();
   formData.append('profilePicture', file);

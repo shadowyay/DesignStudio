@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUserById, updateUserProfile } from '../controllers/userController';
+import { getUserById, updateUserProfile, deleteUserById } from '../controllers/userController';
 
 const router = express.Router();
 
@@ -20,6 +20,16 @@ router.put('/:id', async (req, res) => {
     res.json(updatedUser);
   } catch (_err) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete user account
+router.delete('/:id', async (req, res) => {
+  try {
+    const result = await deleteUserById(req.params.id);
+    res.json(result);
+  } catch (err: any) {
+    res.status(404).json({ message: err.message || 'User not found' });
   }
 });
 

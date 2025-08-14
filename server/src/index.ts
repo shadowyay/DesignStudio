@@ -37,6 +37,18 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// Ensure indexes are created (including TTL on tasks)
+mongoose.connection.on('open', async () => {
+  try {
+    await Promise.all([
+      (await import('./models/Task')).default.syncIndexes(),
+    ]);
+    console.log('Indexes synced');
+  } catch (err) {
+    console.error('Failed to sync indexes:', err);
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('Micro Volunteer Platform API is running');
 });
