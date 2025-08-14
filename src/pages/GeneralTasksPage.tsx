@@ -67,10 +67,14 @@ const GeneralTasksPage: React.FC = () => {
       const result = await acceptTask(taskId, userId!, token!);
       if (result.success) {
         setMessage('General task accepted successfully!');
+        // Merge updated task immediately so UI reflects acceptance and shows creator
+        if (result.task && result.task._id) {
+          setTasks(prev => prev.map(t => (t._id === result.task._id ? { ...t, ...result.task } : t)));
+        }
         setTimeout(() => {
           fetchTasks();
           setMessage('');
-        }, 2000);
+        }, 1200);
       } else {
         setMessage(result.message || 'Could not accept task.');
       }

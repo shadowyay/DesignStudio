@@ -108,14 +108,18 @@ const VolunteerDashboard: React.FC = () => {
         setAccepting(null);
         return;
       }
-  const result = await acceptTask(taskId, userId!, token!);
+      const result = await acceptTask(taskId, userId!, token!);
       if (result.success) {
         setMessage('Task accepted successfully!');
-        // Refresh tasks to show updated status
+        // Immediately merge updated task so creator info shows without waiting
+        if (result.task && result.task._id) {
+          setTasks(prev => prev.map(t => (t._id === result.task._id ? { ...t, ...result.task } : t)));
+        }
+        // Then do a light refresh to sync counters/availability
         setTimeout(() => {
           refreshTasks();
           setMessage('');
-        }, 2000);
+        }, 1200);
       } else {
         setMessage(result.message || 'Could not accept task.');
       }
