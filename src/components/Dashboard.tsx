@@ -16,6 +16,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
   const [newTask, setNewTask] = useState<Omit<ICreateTaskData, 'createdBy' | 'location'> & { location: LocationData }>({ // Explicitly type newTask
     title: '',
     description: '',
@@ -66,6 +67,37 @@ const Dashboard: React.FC = () => {
       return title.includes(q) || desc.includes(q) || addr.includes(q);
     });
   }, [tasks, search]);
+
+  // Validation function for description
+  const validateDescription = (description: string): { isValid: boolean; error: string } => {
+    if (!description || typeof description !== 'string') {
+      return { isValid: false, error: 'Description is required' };
+    }
+    
+    const trimmed = description.trim();
+    if (trimmed.length < 10) {
+      return { isValid: false, error: 'Description must be at least 10 characters long' };
+    }
+    
+    if (trimmed.length > 1000) {
+      return { isValid: false, error: 'Description cannot exceed 1000 characters' };
+    }
+    
+    return { isValid: true, error: '' };
+  };
+
+  // Check if form is valid
+  const isFormValid = useMemo(() => {
+    const currentDescription = editingTask ? editingTask.description : newTask.description;
+    const currentTitle = editingTask ? editingTask.title : newTask.title;
+    const currentLocation = editingTask ? editingTask.location : newTask.location;
+    
+    const descValidation = validateDescription(currentDescription || '');
+    const hasTitle = currentTitle && currentTitle.trim().length > 0;
+    const hasLocation = currentLocation && currentLocation.address && currentLocation.lat !== 0 && currentLocation.lng !== 0;
+    
+    return descValidation.isValid && hasTitle && hasLocation;
+  }, [editingTask, newTask]);
 
 
 
@@ -191,6 +223,15 @@ const Dashboard: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    // Validate description before submitting
+    const descValidation = validateDescription(newTask.description || '');
+    if (!descValidation.isValid) {
+      setError(descValidation.error);
+      setLoading(false);
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -233,6 +274,15 @@ const Dashboard: React.FC = () => {
     if (!editingTask) return;
     setLoading(true);
     setError('');
+    
+    // Validate description before submitting
+    const descValidation = validateDescription(editingTask.description || '');
+    if (!descValidation.isValid) {
+      setError(descValidation.error);
+      setLoading(false);
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -411,8 +461,35 @@ const Dashboard: React.FC = () => {
               <input type="text" value={editingTask ? editingTask.title : newTask.title} onChange={e => editingTask ? setEditingTask({ ...editingTask, title: e.target.value }) : setNewTask({ ...newTask, title: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" required />
             </div>
             <div>
-              <label className="block font-medium text-gray-700 mb-1">Description:</label>
-              <textarea value={editingTask ? editingTask.description : newTask.description} onChange={e => editingTask ? setEditingTask({ ...editingTask, description: e.target.value }) : setNewTask({ ...newTask, description: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" rows={3}></textarea>
+              <label className="block font-medium text-gray-700 mb-1">Description: <span className="text-red-500">*</span></label>
+              <textarea 
+                value={editingTask ? editingTask.description : newTask.description} 
+                onChange={e => {
+                  const newDesc = e.target.value;
+                  const validation = validateDescription(newDesc);
+                  setDescriptionError(validation.error);
+                  
+                  if (editingTask) {
+                    setEditingTask({ ...editingTask, description: newDesc });
+                  } else {
+                    setNewTask({ ...newTask, description: newDesc });
+                  }
+                }} 
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 ${
+                  descriptionError 
+                    ? 'border-red-300 focus:ring-red-400 focus:border-red-400' 
+                    : 'border-gray-300 focus:ring-blue-400 focus:border-blue-400'
+                }`} 
+                rows={3}
+                placeholder="Provide a detailed description of the task (minimum 10 characters)"
+                required
+              />
+              {descriptionError && (
+                <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+              )}
+              <p className="text-gray-500 text-xs mt-1">
+                Character count: {((editingTask ? editingTask.description : newTask.description) || '').length}/1000
+              </p>
             </div>
             <LocationPicker
               address={newTask.location?.address || ''}
@@ -509,9 +586,22 @@ const Dashboard: React.FC = () => {
                   </select>
                 </div>
               </div>
-            <button type="submit" className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" disabled={loading}>
+            <button 
+              type="submit" 
+              className={`w-full py-3 text-white rounded-lg font-semibold transition ${
+                loading || !isFormValid 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`} 
+              disabled={loading || !isFormValid}
+            >
               {loading ? 'Saving...' : (editingTask ? 'Update Task' : 'Create Task')}
             </button>
+            {!isFormValid && (
+              <p className="text-red-500 text-sm text-center mt-2">
+                Please fill in all required fields with valid information before submitting.
+              </p>
+            )}
           </form>
         </div>
       )}
@@ -575,7 +665,7 @@ const Dashboard: React.FC = () => {
                               const recencyScore = 1 - idx / (acceptedList.length || 1);
                               // Score: skill match (2), points (normalized), recency (0.5)
                               const score = (skillMatch ? 2 : 0) + ((vol.points || 0) / 20) + recencyScore * 0.5;
-                              let reason = [];
+                              const reason = [];
                               if (skillMatch) reason.push('Skill match');
                               if (vol.points) reason.push(`Points: ${vol.points}`);
                               reason.push(`Recency: ${idx === 0 ? 'First' : `#${idx+1}`}`);

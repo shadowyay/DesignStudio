@@ -22,7 +22,19 @@ export interface ITask extends Document {
 
 const TaskSchema: Schema = new Schema({
   title: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { 
+    type: String, 
+    required: [true, 'Description is required'],
+    trim: true,
+    minlength: [10, 'Description must be at least 10 characters long'],
+    maxlength: [1000, 'Description cannot exceed 1000 characters'],
+    validate: {
+      validator: function(v: string) {
+        return v && v.trim().length >= 10;
+      },
+      message: 'Description must contain at least 10 meaningful characters'
+    }
+  },
   peopleNeeded: { type: Number, required: true },
   urgency: { type: String, enum: ['Normal', 'Urgent', 'Emergency'], required: true },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

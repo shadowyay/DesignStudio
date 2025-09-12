@@ -7,6 +7,20 @@ import { ITask } from '../models/Task';
 export const createTask = async (taskData: Omit<ITask, 'acceptedBy' | 'createdAt' | 'updatedAt' | '_id'>) => {
   const { title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime, amount, taskCategory } = taskData;
   
+  // Validate description more strictly
+  if (!description || typeof description !== 'string') {
+    throw new Error('Description is required');
+  }
+  
+  const trimmedDescription = description.trim();
+  if (trimmedDescription.length < 10) {
+    throw new Error('Description must be at least 10 characters long');
+  }
+  
+  if (trimmedDescription.length > 1000) {
+    throw new Error('Description cannot exceed 1000 characters');
+  }
+  
   // Validate user exists
   const user = await User.findById(createdBy);
   if (!user) {
@@ -46,7 +60,22 @@ export const updateTask = async (taskId: string, updateData: Partial<Omit<ITask,
 
   // Update allowed fields
   if (updateData.title !== undefined) task.title = updateData.title;
-  if (updateData.description !== undefined) task.description = updateData.description;
+  if (updateData.description !== undefined) {
+    if (!updateData.description || typeof updateData.description !== 'string') {
+      throw new Error('Description is required');
+    }
+    
+    const trimmedDescription = updateData.description.trim();
+    if (trimmedDescription.length < 10) {
+      throw new Error('Description must be at least 10 characters long');
+    }
+    
+    if (trimmedDescription.length > 1000) {
+      throw new Error('Description cannot exceed 1000 characters');
+    }
+    
+    task.description = updateData.description;
+  }
   if (updateData.peopleNeeded !== undefined) task.peopleNeeded = updateData.peopleNeeded;
   if (updateData.urgency !== undefined) task.urgency = updateData.urgency;
   if (updateData.location !== undefined) {
