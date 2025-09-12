@@ -166,3 +166,179 @@ export const sendVerificationSuccessEmail = async (email: string, name: string) 
     return false;
   }
 };
+
+// Send task acceptance notification to user (task owner)
+export const sendTaskAcceptedEmailToUser = async (
+  userEmail: string, 
+  userName: string, 
+  taskTitle: string,
+  taskDescription: string,
+  volunteerName: string,
+  volunteerEmail: string,
+  _taskId: string
+) => {
+  try {
+    const transporter = createTransporter();
+    const frontendBase = process.env.FRONTEND_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
+    
+    const mailOptions = {
+      from: process.env.SMTP_USER || 'your-email@gmail.com',
+      to: userEmail,
+      subject: `Your Task "${taskTitle}" Has Been Accepted! - SmartServe`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 30px; border-radius: 10px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Task Accepted!</h1>
+            <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">A volunteer has accepted your task</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #333; margin: 0 0 20px 0;">Hi ${userName},</h2>
+            
+            <p style="color: #666; line-height: 1.6; margin: 0 0 20px 0;">
+              Great news! Your task has been accepted by a volunteer. Here are the details:
+            </p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+              <h3 style="color: #333; margin: 0 0 10px 0;">Task Details:</h3>
+              <p style="color: #333; margin: 5px 0; font-weight: bold;">Title: ${taskTitle}</p>
+              <p style="color: #666; margin: 5px 0;">Description: ${taskDescription}</p>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+              <h3 style="color: #333; margin: 0 0 10px 0;">Volunteer Details:</h3>
+              <p style="color: #333; margin: 5px 0; font-weight: bold;">Name: ${volunteerName}</p>
+              <p style="color: #666; margin: 5px 0;">Email: ${volunteerEmail}</p>
+            </div>
+            
+            <p style="color: #666; line-height: 1.6; margin: 20px 0;">
+              You can contact the volunteer directly via their email or through our platform. Please coordinate 
+              the details of when and where to meet for the task completion.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${frontendBase}/dashboard" 
+                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; 
+                        padding: 15px 30px; 
+                        text-decoration: none; 
+                        border-radius: 25px; 
+                        display: inline-block; 
+                        font-weight: bold;
+                        font-size: 16px;">
+                View Task Details
+              </a>
+            </div>
+            
+            <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px;">
+              <p style="color: #999; font-size: 12px; margin: 0;">
+                Thank you for using SmartServe to connect with volunteers in your community!
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Task accepted email sent to user successfully:', result.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending task accepted email to user:', error);
+    return false;
+  }
+};
+
+// Send task acceptance confirmation to volunteer
+export const sendTaskAcceptedEmailToVolunteer = async (
+  volunteerEmail: string,
+  volunteerName: string,
+  taskTitle: string,
+  taskDescription: string,
+  userName: string,
+  userEmail: string,
+  taskLocation: string,
+  taskAmount: number,
+  _taskId: string
+) => {
+  try {
+    const transporter = createTransporter();
+    const frontendBase = process.env.FRONTEND_URL
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
+    
+    const mailOptions = {
+      from: process.env.SMTP_USER || 'your-email@gmail.com',
+      to: volunteerEmail,
+      subject: `Task Acceptance Confirmed: "${taskTitle}" - SmartServe`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">✅ Task Confirmed!</h1>
+            <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">You've successfully accepted a task</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #333; margin: 0 0 20px 0;">Hi ${volunteerName},</h2>
+            
+            <p style="color: #666; line-height: 1.6; margin: 0 0 20px 0;">
+              Thank you for accepting this volunteer opportunity! Here are the task details and contact information:
+            </p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+              <h3 style="color: #333; margin: 0 0 10px 0;">Task Details:</h3>
+              <p style="color: #333; margin: 5px 0; font-weight: bold;">Title: ${taskTitle}</p>
+              <p style="color: #666; margin: 5px 0;">Description: ${taskDescription}</p>
+              <p style="color: #666; margin: 5px 0;">Location: ${taskLocation}</p>
+              <p style="color: #333; margin: 5px 0; font-weight: bold; color: #28a745;">Amount: ₹${taskAmount.toFixed(2)}</p>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+              <h3 style="color: #333; margin: 0 0 10px 0;">Task Owner Contact:</h3>
+              <p style="color: #333; margin: 5px 0; font-weight: bold;">Name: ${userName}</p>
+              <p style="color: #666; margin: 5px 0;">Email: ${userEmail}</p>
+            </div>
+            
+            <p style="color: #666; line-height: 1.6; margin: 20px 0;">
+              Please reach out to the task owner to coordinate the details. Make sure to discuss the timing, 
+              meeting location, and any specific requirements for completing the task.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${frontendBase}/volunteer-dashboard" 
+                 style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+                        color: white; 
+                        padding: 15px 30px; 
+                        text-decoration: none; 
+                        border-radius: 25px; 
+                        display: inline-block; 
+                        font-weight: bold;
+                        font-size: 16px;">
+                View My Tasks
+              </a>
+            </div>
+            
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="color: #1565c0; margin: 0; font-size: 14px; text-align: center;">
+                💡 <strong>Tip:</strong> Completing tasks successfully earns you points and helps build your volunteer reputation!
+              </p>
+            </div>
+            
+            <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px;">
+              <p style="color: #999; font-size: 12px; margin: 0;">
+                Thank you for being part of the SmartServe volunteer community. Together, we make a difference!
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Task acceptance confirmation email sent to volunteer successfully:', result.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending task acceptance confirmation email to volunteer:', error);
+    return false;
+  }
+};

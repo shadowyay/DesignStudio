@@ -1,8 +1,15 @@
 import Task from '../models/Task';
 import User from '../models/User';
 import { validateLocation, formatLocationForDB } from '../utils/locationUtils';
+import { sendTaskAcceptedEmailToUser, sendTaskAcceptedEmailToVolunteer } from '../utils/emailUtils';
 import mongoose, { FilterQuery } from 'mongoose';
 import { ITask } from '../models/Task';
+
+interface IPopulatedUser {
+  _id: string;
+  name: string;
+  email: string;
+}
 
 export const createTask = async (taskData: Omit<ITask, 'acceptedBy' | 'createdAt' | 'updatedAt' | '_id'>) => {
   const { title, description, peopleNeeded, urgency, createdBy, location, approxStartTime, endTime, amount, taskCategory } = taskData;
@@ -167,6 +174,52 @@ export const acceptTask = async (taskId: string, volunteerId: string) => {
     { path: 'createdBy', select: 'name email' },
     { path: 'acceptedBy', select: 'name email points level skills profilePicture' },
   ]);
+
+  // Send email notifications
+  if (updatedTask && volunteer) {
+    // When populated, createdBy will have name and email properties
+    const taskOwner = updatedTask.createdBy as unknown as IPopulatedUser;
+    
+    // Send email to task owner (user who created the task)
+    if (taskOwner && taskOwner.email && taskOwner.name) {
+      try {
+        await sendTaskAcceptedEmailToUser(
+          taskOwner.email,
+          taskOwner.name,
+          updatedTask.title,
+          updatedTask.description,
+          volunteer.name,
+          volunteer.email,
+          taskId
+        );
+        console.log(`Task acceptance notification email sent to user: ${taskOwner.email}`);
+      } catch (error) {
+        console.error('Failed to send email to task owner:', error);
+        // Don't throw error - email failure shouldn't break the task acceptance
+      }
+    }
+
+    // Send confirmation email to volunteer
+    if (volunteer.email) {
+      try {
+        await sendTaskAcceptedEmailToVolunteer(
+          volunteer.email,
+          volunteer.name,
+          updatedTask.title,
+          updatedTask.description,
+          taskOwner?.name || 'Task Owner',
+          taskOwner?.email || '',
+          updatedTask.location?.address || 'Location not specified',
+          updatedTask.amount || 0,
+          taskId
+        );
+        console.log(`Task acceptance confirmation email sent to volunteer: ${volunteer.email}`);
+      } catch (error) {
+        console.error('Failed to send confirmation email to volunteer:', error);
+        // Don't throw error - email failure shouldn't break the task acceptance
+      }
+    }
+  }
 
   return {
     ...updatedTask!.toObject(),
