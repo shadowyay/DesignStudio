@@ -4,14 +4,45 @@ import type { IFrontendUser, RegisterData, ICreateTaskData } from './types';
 export const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api`;
 
 export async function acceptTask(taskId: string, volunteerId: string, token: string) {
-  const res = await fetch(`${API_URL}/tasks/${taskId}/accept/${volunteerId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+  console.log('Making API call to accept task:', {
+    taskId,
+    volunteerId,
+    tokenPrefix: token.substring(0, 20) + '...',
+    url: `${API_URL}/tasks/${taskId}/accept/${volunteerId}`
   });
-  return res.json();
+  
+  try {
+    const res = await fetch(`${API_URL}/tasks/${taskId}/accept/${volunteerId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+  
+    console.log('API Response status:', res.status);
+    
+    const data = await res.json().catch(e => {
+      console.error('Error parsing JSON response:', e);
+      throw new Error('Invalid JSON response from server');
+    });
+    
+    console.log('API Response data:', data);
+  
+    if (!res.ok) {
+      throw new Error(data.message || `Failed to accept task: ${res.status}`);
+    }
+  
+    if (!data || !data.task) {
+      console.error('Invalid response format:', data);
+      throw new Error('Invalid response format from server');
+    }
+  
+    return data;
+  } catch (error) {
+    console.error('Error in acceptTask:', error);
+    throw error;
+  }
 }
 
 export async function login(email: string, password: string) {

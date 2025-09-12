@@ -32,11 +32,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ isVolunteer }) => {
     setError('');
     try {
       const res = await login(email, password);
+      console.log('Login response:', res);
       if (res.token && res.user && res.user._id) {
         // Save token, user ID, and user name
         localStorage.setItem('token', res.token);
         localStorage.setItem('userId', res.user._id);
         localStorage.setItem('userName', res.user.name);
+        console.log('Saved auth details:', {
+          token: res.token.substring(0, 20) + '...',
+          userId: res.user._id,
+          userName: res.user.name
+        });
         setLoading(false); // Set loading to false BEFORE navigation
         navigate(isVolunteer ? '/volunteer/dashboard' : '/user/dashboard');
       } else {

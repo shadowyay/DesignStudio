@@ -134,36 +134,61 @@ const VolunteerDashboard: React.FC = () => {
   }, [tasks, search, recommendedTasks]);
 
   const handleAccept = async (taskId: string) => {
+    console.log('Accept button clicked for task:', taskId);
+    
     if (!userId) {
       setMessage('You must be logged in as a volunteer to accept tasks.');
       return;
     }
+
+    // Immediate visual feedback
     setAccepting(taskId);
-    setMessage('');
+    setMessage('Accepting task...');
+
     try {
-      if (!token) {
-        setMessage('Authentication token not found. Please log in.');
+      const storedToken = localStorage.getItem('token');
+      console.log('Stored token:', storedToken ? storedToken.substring(0, 20) + '...' : 'none');
+      
+      if (!storedToken) {
+        console.log('No token found in localStorage');
+        setMessage('Authentication token not found. Please log in again.');
         setAccepting(null);
+        navigate('/volunteer/login');
         return;
       }
-      const result = await acceptTask(taskId, userId!, token!);
-      if (result.success) {
+
+      console.log('Calling acceptTask API with:', {
+        taskId,
+        userId,
+        tokenPrefix: storedToken.substring(0, 20)
+      });
+      
+      const result = await acceptTask(taskId, userId, storedToken);
+      console.log('Accept task API response:', result);
+      
+      if (result.task) {
+        console.log('Task accepted successfully:', result.task);
         setMessage('Task accepted successfully!');
         setShowThankYou(true);
-        if (result.task && result.task._id) {
-          setTasks(prev => prev.map(t => (t._id === result.task._id ? { ...t, ...result.task } : t)));
-        }
-        // Fetch updated user profile to update points/level
-        if (userId && token) {
-          const updatedProfile = await getUserProfile(userId, token);
+        
+        // Update tasks list
+        setTasks(prev => prev.map(t => 
+          t._id === result.task._id ? { ...t, ...result.task } : t
+        ));
+        
+        // Update user profile to show new points/level
+        try {
+          console.log('Fetching updated profile...');
+          const updatedProfile = await getUserProfile(userId, storedToken);
+          console.log('Updated profile received:', updatedProfile);
           setProfile(updatedProfile);
+        } catch (profileErr) {
+          console.error('Error updating profile:', profileErr);
+          setMessage('Task accepted, but could not update profile. Please refresh the page.');
         }
-        setTimeout(() => {
-          refreshTasks();
-          setMessage('');
-        }, 1200);
       } else {
-        setMessage(result.message || 'Could not accept task.');
+        console.error('Invalid API response:', result);
+        setMessage('Server returned an invalid response. Please try again.');
       }
     } catch (_err) {
       setMessage('Error accepting task.');
@@ -258,6 +283,19 @@ const VolunteerDashboard: React.FC = () => {
           </div>
         )}
         {/* AI-based Recommendations */}
+        {/* Message Display */}
+        {message && (
+          <div className={`mb-4 p-3 rounded text-sm ${
+            message.includes('error') || message.includes('failed')
+              ? 'bg-red-100 text-red-700 border border-red-300'
+              : message.includes('success')
+              ? 'bg-green-100 text-green-700 border border-green-300'
+              : 'bg-blue-100 text-blue-700 border border-blue-300'
+          }`}>
+            {message}
+          </div>
+        )}
+        
         {/* Debug output for recommendations */}
         {!showProfile && (
           <div className="mb-4 p-2 bg-yellow-50 border border-yellow-300 rounded text-xs text-yellow-800">
