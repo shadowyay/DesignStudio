@@ -13,6 +13,8 @@ export interface IFrontendUser {
   gender?: string;
   aadhaar: string;
   isEmailVerified?: boolean;
+  points?: number;
+  level?: number;
 }
 
 export interface ICreateTaskData {

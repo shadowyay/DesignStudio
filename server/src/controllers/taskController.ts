@@ -124,10 +124,19 @@ export const acceptTask = async (taskId: string, volunteerId: string) => {
   task.markModified('acceptedBy');
   await task.save();
 
+  // Award points to volunteer
+  const volunteer = await User.findById(volunteerId);
+  if (volunteer) {
+    volunteer.points = (volunteer.points || 0) + 5;
+    // Level up: every 20 points = new level
+    volunteer.level = Math.floor((volunteer.points || 0) / 20) + 1;
+    await volunteer.save();
+  }
+
   // Return populated task
   const updatedTask = await Task.findById(taskId).populate([
     { path: 'createdBy', select: 'name email' },
-    { path: 'acceptedBy', select: 'name email' },
+    { path: 'acceptedBy', select: 'name email points level skills profilePicture' },
   ]);
 
   return {

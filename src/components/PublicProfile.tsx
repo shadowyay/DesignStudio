@@ -114,6 +114,12 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         {profile?.about && (
           <div className="text-sm text-gray-600 mt-1">{profile.about}</div>
         )}
+        {/* Show points and level if available */}
+        {(typeof profile?.points === 'number' || typeof profile?.level === 'number') && (
+          <div className="text-xs text-indigo-700 mt-1">
+            Points: <span className="font-bold">{profile?.points ?? 0}</span> | Level: <span className="font-bold">{profile?.level ?? 1}</span>
+          </div>
+        )}
         {loading && <div className="text-xs text-gray-400">Loading...</div>}
         {error && <div className="text-xs text-red-400">Failed to load profile</div>}
       </div>

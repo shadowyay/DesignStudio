@@ -17,6 +17,8 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
+  points?: number;
+  level?: number;
 }
 
 const UserSchema: Schema = new Schema({
@@ -27,7 +29,7 @@ const UserSchema: Schema = new Schema({
   dob: { type: String },
   location: { type: String },
   role: { type: String, enum: ['user', 'volunteer'], required: true },
-  skills: { type: [String] },
+  skills: { type: [String], default: [] },
   openToAnything: { type: Boolean },
   profilePicture: { type: String },
   about: { type: String },
@@ -35,7 +37,9 @@ const UserSchema: Schema = new Schema({
   aadhaar: { type: String, required: true, unique: true },
   isEmailVerified: { type: Boolean, default: false },
   emailVerificationToken: { type: String },
-  emailVerificationExpires: { type: Date }
+  emailVerificationExpires: { type: Date },
+  points: { type: Number, default: 0 },
+  level: { type: Number, default: 1 }
 }, { timestamps: true });
 
 export default mongoose.model<IUser>('User', UserSchema);

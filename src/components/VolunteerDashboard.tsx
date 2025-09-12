@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, acceptTask, getUserProfile, updateUserProfile, deleteAccount } from '../api';
@@ -5,6 +6,7 @@ import AddressDisplay from './AddressDisplay';
 import PublicProfile from './PublicProfile';
 import type { IFrontendUser, IFrontendTask } from '../types';
 import NavBar from './NavBar';
+import Feedback from './Feedback';
 
 
 const VolunteerDashboard: React.FC = () => {
@@ -16,9 +18,21 @@ const VolunteerDashboard: React.FC = () => {
   const [accepting, setAccepting] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [profile, setProfile] = useState<IFrontendUser | null>(null);
+  // Local state for skills input (must be after profile is defined)
+  const [skillsInput, setSkillsInput] = useState<string>('');
+  useEffect(() => {
+    if (Array.isArray(profile?.skills)) {
+      setSkillsInput(profile.skills.join(', '));
+    } else if (typeof profile?.skills === 'string') {
+      setSkillsInput(profile.skills);
+    } else {
+      setSkillsInput('');
+    }
+  }, [profile?.skills]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
+  const [showThankYou, setShowThankYou] = useState(false);
   const [search, setSearch] = useState('');
 
   const userId = localStorage.getItem('userId');
@@ -83,17 +97,41 @@ const VolunteerDashboard: React.FC = () => {
     }
   }, [showProfile, userId, token, refreshTasks]); 
 
-  // Search filtering for available tasks
+
+  // Simple recommendation logic: recommend tasks matching volunteer's skills or interests
+  const recommendedTasks: IFrontendTask[] = useMemo(() => {
+    if (!profile || !profile.skills || profile.skills.length === 0) return [];
+    const skillsLower = profile.skills.map(s => s.toLowerCase().trim());
+    return tasks.filter(task => {
+      const title = (task.title || '').toLowerCase();
+      const desc = (task.description || '').toLowerCase();
+      return skillsLower.some(skill =>
+        skill && (
+          title.includes(skill) ||
+          desc.includes(skill) ||
+          skill.includes(title) ||
+          skill.includes(desc)
+        )
+      );
+    });
+  }, [tasks, profile]);
+
+  // Remove recommended tasks from main list to avoid duplication
   const visibleTasks: IFrontendTask[] = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return tasks;
-    return tasks.filter((t: IFrontendTask) => {
+    let filtered = tasks;
+    if (recommendedTasks.length > 0) {
+      const recommendedIds = new Set(recommendedTasks.map(t => t._id));
+      filtered = filtered.filter(t => !recommendedIds.has(t._id));
+    }
+    if (!q) return filtered;
+    return filtered.filter((t: IFrontendTask) => {
       const title = t.title?.toLowerCase() || '';
       const desc = t.description?.toLowerCase() || '';
       const addr = t.location?.address?.toLowerCase() || '';
       return title.includes(q) || desc.includes(q) || addr.includes(q);
     });
-  }, [tasks, search]);
+  }, [tasks, search, recommendedTasks]);
 
   const handleAccept = async (taskId: string) => {
     if (!userId) {
@@ -111,11 +149,15 @@ const VolunteerDashboard: React.FC = () => {
       const result = await acceptTask(taskId, userId!, token!);
       if (result.success) {
         setMessage('Task accepted successfully!');
-        // Immediately merge updated task so creator info shows without waiting
+        setShowThankYou(true);
         if (result.task && result.task._id) {
           setTasks(prev => prev.map(t => (t._id === result.task._id ? { ...t, ...result.task } : t)));
         }
-        // Then do a light refresh to sync counters/availability
+        // Fetch updated user profile to update points/level
+        if (userId && token) {
+          const updatedProfile = await getUserProfile(userId, token);
+          setProfile(updatedProfile);
+        }
         setTimeout(() => {
           refreshTasks();
           setMessage('');
@@ -167,8 +209,10 @@ const VolunteerDashboard: React.FC = () => {
         return;
       }
       await updateUserProfile(userId, profile, token); // Pass token
+      // Reload profile from backend to get latest skills
+      const updated = await getUserProfile(userId, token);
+      setProfile(updated);
       setProfileMessage('Profile updated successfully!');
-      
     } catch (_err) {
       setProfileError('Failed to update profile.');
     } finally {
@@ -176,83 +220,146 @@ const VolunteerDashboard: React.FC = () => {
     }
   };
 
+  // Debug: Log skills and tasks for troubleshooting
+
   return (
     <>
+      {/* Thank You Modal */}
+      {showThankYou && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center max-w-xs">
+            <img src="/profile_pics/thankyou.jpg" alt="Thank you" className="w-32 h-32 object-contain mb-4" />
+            <div className="text-lg font-semibold text-indigo-700 mb-2 text-center">Thank you for accepting the task!</div>
+            <div className="text-gray-600 text-center mb-4">It means a lot!</div>
+            <button
+              className="mt-2 px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              onClick={() => setShowThankYou(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <NavBar 
         userType="volunteer" 
         onProfileToggle={() => setShowProfile(!showProfile)}
         showProfile={showProfile}
       />
       <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
-  {!showProfile && (
-    <div className="bg-white p-8 rounded-2xl shadow-lg mb-8">
-
-          {/* Task Category Navigation */}
-          <div className="mb-8 p-4 bg-gray-50 rounded-lg border">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Browse Tasks by Category:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button
-                onClick={() => navigate('/blood-emergency')}
-                className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition text-left"
-              >
-                <div className="text-2xl mb-2">🩸</div>
-                <h4 className="font-bold text-red-700">Blood Emergency</h4>
-                <p className="text-sm text-red-600">Urgent blood donation requests</p>
-              </button>
-              
-              <button
-                onClick={() => navigate('/donor')}
-                className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition text-left"
-              >
-                <div className="text-2xl mb-2">🫀</div>
-                <h4 className="font-bold text-green-700">Donor Tasks</h4>
-                <p className="text-sm text-green-600">Blood donation opportunities</p>
-              </button>
-              
-              <button
-                onClick={() => navigate('/general-tasks')}
-                className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition text-left"
-              >
-                <div className="text-2xl mb-2">📋</div>
-                <h4 className="font-bold text-blue-700">General Tasks</h4>
-                <p className="text-sm text-blue-600">Community service opportunities</p>
-              </button>
+        {/* Volunteer Points and Level */}
+        {!showProfile && profile && (
+          <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="text-lg font-semibold text-indigo-700">
+              Points: <span className="font-bold">{profile.points ?? 0}</span>
+            </div>
+            <div className="text-lg font-semibold text-indigo-700">
+              Level: <span className="font-bold">{profile.level ?? 1}</span>
             </div>
           </div>
-      </div>
-  )}
-      {!showProfile ? (
-        <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-blue-700">Available Tasks</h2>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search tasks (title, description, location)"
-                className="flex-1 md:w-80 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
-              />
-              <button
-                onClick={refreshTasks}
-                disabled={loading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Refreshing...' : '🔄 Refresh'}
-              </button>
+        )}
+        {/* AI-based Recommendations */}
+        {/* Debug output for recommendations */}
+        {!showProfile && (
+          <div className="mb-4 p-2 bg-yellow-50 border border-yellow-300 rounded text-xs text-yellow-800">
+            <div><b>Debug:</b> Current skills: {Array.isArray(profile?.skills) ? profile.skills.join(', ') : ''}</div>
+            <div><b>Debug:</b> Available tasks: {tasks.map(t => t.title).join(' | ')}</div>
+            <div><b>Debug:</b> Recommended count: {recommendedTasks.length}</div>
+            {recommendedTasks.length > 0 && (
+              <div><b>Debug:</b> First recommended task volunteer info: <pre>{JSON.stringify(recommendedTasks[0].acceptedBy, null, 2)}</pre></div>
+            )}
+            <div><b>Debug:</b> Raw profile: <pre>{JSON.stringify(profile, null, 2)}</pre></div>
+          </div>
+        )}
+        {!showProfile && recommendedTasks.length > 0 && (
+          <section className="mb-8 p-4 border border-green-300 bg-green-50 rounded-lg shadow-sm">
+            <h2 className="text-lg font-semibold text-green-700 mb-2">Recommended for You</h2>
+            <ul className="space-y-3">
+              {recommendedTasks.map(task => (
+                <li key={task._id} className="p-3 bg-white rounded shadow flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="font-semibold text-gray-800">{task.title}</div>
+                    <div className="text-gray-600 text-sm">{task.description}</div>
+                    <div className="text-xs text-gray-400 mt-1">Category: {task.taskCategory}</div>
+                  </div>
+                  <button
+                    className="mt-2 md:mt-0 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    onClick={() => handleAccept(task._id)}
+                    disabled={accepting === task._id}
+                  >
+                    {accepting === task._id ? 'Accepting...' : 'Accept Task'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {/* ...existing code for category navigation and main task list... */}
+        {!showProfile && (
+          <div className="bg-white p-8 rounded-2xl shadow-lg mb-8">
+            {/* Task Category Navigation */}
+            <div className="mb-8 p-4 bg-gray-50 rounded-lg border">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Browse Tasks by Category:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => navigate('/blood-emergency')}
+                  className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition text-left"
+                >
+                  <div className="text-2xl mb-2">🩸</div>
+                  <h4 className="font-bold text-red-700">Blood Emergency</h4>
+                  <p className="text-sm text-red-600">Urgent blood donation requests</p>
+                </button>
+                <button
+                  onClick={() => navigate('/donor')}
+                  className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition text-left"
+                >
+                  <div className="text-2xl mb-2">🫀</div>
+                  <h4 className="font-bold text-green-700">Donor Tasks</h4>
+                  <p className="text-sm text-green-600">Blood donation opportunities</p>
+                </button>
+                <button
+                  onClick={() => navigate('/general-tasks')}
+                  className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition text-left"
+                >
+                  <div className="text-2xl mb-2">📋</div>
+                  <h4 className="font-bold text-blue-700">General Tasks</h4>
+                  <p className="text-sm text-blue-600">Community service opportunities</p>
+                </button>
+              </div>
             </div>
           </div>
-          {/** derive visible tasks based on search **/}
-          {/** computed via useMemo below **/}
-          {loading ? <p className="text-gray-500">Loading tasks...</p> : null}
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-          {message && <p className={`mt-2 font-semibold ${message.includes('accepted') ? 'text-green-600' : 'text-red-500'}`}>{message}</p>}
-          
-          {/* Task Summary */}
-      {!loading && visibleTasks.length > 0 && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
-        Showing {visibleTasks.length} task{visibleTasks.length !== 1 ? 's' : ''}
+        )}
+        {/* ...existing code for main task list continues here... */}
+        {!showProfile ? (
+          <section className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+              <h2 className="text-2xl font-bold text-blue-700">Available Tasks</h2>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search tasks (title, description, location)"
+                  className="flex-1 md:w-80 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
+                />
+                <button
+                  onClick={refreshTasks}
+                  disabled={loading}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Refreshing...' : '🔄 Refresh'}
+                </button>
+              </div>
+            </div>
+            {/** derive visible tasks based on search **/}
+            {/** computed via useMemo below **/}
+            {loading ? <p className="text-gray-500">Loading tasks...</p> : null}
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+            {message && <p className={`mt-2 font-semibold ${message.includes('accepted') ? 'text-green-600' : 'text-red-500'}`}>{message}</p>}
+            {/* Task Summary */}
+            {!loading && visibleTasks.length > 0 && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  Showing {visibleTasks.length} task{visibleTasks.length !== 1 ? 's' : ''}
         {search ? ' (filtered)' : ''} - 
                 Available to accept or already accepted by you
               </p>
@@ -671,7 +778,25 @@ const VolunteerDashboard: React.FC = () => {
             </div>
                          <div>
                <label className="block font-medium text-gray-700 mb-1">Skills / Interests:</label>
-               <input type="text" name="skills" value={profile?.skills || ''} onChange={handleProfileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400" />
+               <input
+                 type="text"
+                 name="skills"
+                 value={skillsInput}
+                 onChange={e => setSkillsInput(e.target.value)}
+                 onBlur={e => {
+                   const value = e.target.value;
+                   setProfile(prevProfile => {
+                     if (!prevProfile) return null;
+                     let arr = value.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+                     // Always send an array, never null/undefined
+                     return {
+                       ...prevProfile,
+                       skills: arr.length > 0 ? arr : []
+                     };
+                   });
+                 }}
+                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
+               />
              </div>
              <div>
                <label className="block font-medium text-gray-700 mb-1">About:</label>
@@ -720,8 +845,11 @@ const VolunteerDashboard: React.FC = () => {
         </section>
       )}
 
-    </main>
-    </>
+
+  {/* Feedback section for volunteers, not in profile view */}
+  {!showProfile && <Feedback theme="volunteer" />}
+  </main>
+  </>
   );
 };
 

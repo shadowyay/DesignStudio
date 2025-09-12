@@ -8,6 +8,7 @@ import PublicProfile from './PublicProfile';
 import { getCurrentLocation } from '../utils/locationUtils';
 import type { IFrontendUser, IFrontendTask, ICreateTaskData, LocationData } from '../types';
 import NavBar from './NavBar';
+import Feedback from './Feedback';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -556,20 +557,73 @@ const Dashboard: React.FC = () => {
                       {task.acceptedBy && task.acceptedBy.length > 0 && (
                         <div className="mt-4">
                           <b className="text-gray-700 mb-2 block">Accepted Volunteers:</b>
-                          <div className="space-y-3">
-                            {task.acceptedBy.map((volunteer: IFrontendUser) => (
-                              <div key={volunteer._id} className="border border-gray-200 rounded-lg p-3 bg-white">
+                          {/* AI Recommendation: Highest-point volunteer */}
+                          {(() => {
+                            // Smarter AI: score by skill match, points, recency
+                            const acceptedList = Array.isArray(task.acceptedBy) ? task.acceptedBy : [];
+                            const scored = acceptedList.map((vol, idx) => {
+                              let skillMatch = false;
+                              if (Array.isArray(vol.skills) && vol.skills.length > 0) {
+                                const skillsLower = vol.skills.map(s => s.toLowerCase().trim());
+                                const title = (task.title || '').toLowerCase();
+                                const desc = (task.description || '').toLowerCase();
+                                skillMatch = skillsLower.some(skill =>
+                                  skill && (title.includes(skill) || desc.includes(skill) || skill.includes(title) || skill.includes(desc))
+                                );
+                              }
+                              // Simulate recency: use array index (lower idx = earlier accept)
+                              const recencyScore = 1 - idx / (acceptedList.length || 1);
+                              // Score: skill match (2), points (normalized), recency (0.5)
+                              const score = (skillMatch ? 2 : 0) + ((vol.points || 0) / 20) + recencyScore * 0.5;
+                              let reason = [];
+                              if (skillMatch) reason.push('Skill match');
+                              if (vol.points) reason.push(`Points: ${vol.points}`);
+                              reason.push(`Recency: ${idx === 0 ? 'First' : `#${idx+1}`}`);
+                              return { vol, score, reason: reason.join(', ') };
+                            });
+                            scored.sort((a, b) => b.score - a.score);
+                            const top = scored[0];
+                            return top ? (
+                              <div className="mb-3 p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                <span className="font-semibold text-indigo-700">AI Recommended Volunteer:</span>
                                 <PublicProfile
-                                  userId={volunteer._id || ''}
-                                  userName={volunteer.name || 'Unknown User'}
-                                  userEmail={volunteer.email || ''}
+                                  userId={top.vol._id || ''}
+                                  userName={top.vol.name || 'Unknown User'}
+                                  userEmail={top.vol.email || ''}
                                   isClickable={true}
-                                  onProfileClick={() => {
-                                    navigate(`/profile/${volunteer._id}`);
-                                  }}
+                                  onProfileClick={() => navigate(`/profile/${top.vol._id}`)}
                                 />
+                                <span className="text-xs text-indigo-700 ml-2">Score: {top.score.toFixed(2)} | {top.reason}</span>
                               </div>
-                            ))}
+                            ) : null;
+                          })()}
+                          <div className="space-y-3">
+                            {task.acceptedBy.map((volunteer: IFrontendUser) => {
+                              // Skill match highlight
+                              let skillMatch = false;
+                              if (Array.isArray(volunteer.skills) && volunteer.skills.length > 0) {
+                                const skillsLower = volunteer.skills.map(s => s.toLowerCase().trim());
+                                const title = (task.title || '').toLowerCase();
+                                const desc = (task.description || '').toLowerCase();
+                                skillMatch = skillsLower.some(skill =>
+                                  skill && (title.includes(skill) || desc.includes(skill) || skill.includes(title) || skill.includes(desc))
+                                );
+                              }
+                              return (
+                                <div key={volunteer._id} className={`border border-gray-200 rounded-lg p-3 bg-white ${skillMatch ? 'ring-2 ring-green-400' : ''}`}>
+                                  <PublicProfile
+                                    userId={volunteer._id || ''}
+                                    userName={volunteer.name || 'Unknown User'}
+                                    userEmail={volunteer.email || ''}
+                                    isClickable={true}
+                                    onProfileClick={() => {
+                                      navigate(`/profile/${volunteer._id}`);
+                                    }}
+                                  />
+                                  {skillMatch && <div className="text-xs text-green-600 mt-1">Skill match!</div>}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -894,8 +948,11 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       )}
-    </main>
-    </>
+
+  {/* Feedback section for users, not in profile view */}
+  {!showProfile && <Feedback theme="user" />}
+  </main>
+  </>
   );
 };
 
