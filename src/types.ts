@@ -31,7 +31,17 @@ export interface ICreateTaskData {
   approxStartTime?: string;
   endTime?: string;
   amount: number;
-  taskCategory: 'General' | 'Donor' | 'Blood Emergency' | 'Other';
+  taskCategory: 'General' | 'Donor' | 'Blood Emergency' | 'Other' | 'Rental';
+  // Rental-specific fields
+  isRental?: boolean;
+  dailyRate?: number;
+  availableFrom?: string;
+  availableTo?: string;
+  rentalDuration?: number;
+  itemCondition?: 'New' | 'Like New' | 'Good' | 'Fair' | 'Poor';
+  securityDeposit?: number;
+  rentalTerms?: string;
+  itemImages?: string[];
 }
 
 export interface IFrontendTask {
@@ -54,7 +64,30 @@ export interface IFrontendTask {
   isFull?: boolean; // Make optional
   createdAt?: string; // Make optional
   updatedAt?: string; // Make optional
-  taskCategory: 'General' | 'Donor' | 'Blood Emergency' | 'Other';
+  taskCategory: 'General' | 'Donor' | 'Blood Emergency' | 'Other' | 'Rental';
+  // Rental-specific fields
+  isRental?: boolean;
+  dailyRate?: number;
+  availableFrom?: string;
+  availableTo?: string;
+  rentalDuration?: number;
+  itemCondition?: 'New' | 'Like New' | 'Good' | 'Fair' | 'Poor';
+  securityDeposit?: number;
+  rentalTerms?: string;
+  itemImages?: string[];
+  // Business volunteer tracking fields
+  businessContactAttempted?: boolean;
+  businessContactedAt?: string;
+  assignedBusinessId?: string;
+  businessVolunteerInfo?: {
+    volunteerName: string;
+    volunteerPhone: string;
+    volunteerEmail?: string;
+    estimatedArrival?: string;
+    assignedAt: string;
+    businessName: string;
+    businessContact: string;
+  };
 }
 
 export interface RegisterData {

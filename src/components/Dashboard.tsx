@@ -5,6 +5,7 @@ import LocationMap from './LocationMap';
 import LocationPicker from './LocationPicker';
 import AddressDisplay from './AddressDisplay';
 import PublicProfile from './PublicProfile';
+import BusinessVolunteerDisplay from './BusinessVolunteerDisplay';
 import { getCurrentLocation } from '../utils/locationUtils';
 import type { IFrontendUser, IFrontendTask, ICreateTaskData, LocationData } from '../types';
 import NavBar from './NavBar';
@@ -26,7 +27,16 @@ const Dashboard: React.FC = () => {
     endTime: '',
     urgency: 'Normal',
     amount: 0,
-      taskCategory: 'General',
+    taskCategory: 'General',
+    isRental: false,
+    dailyRate: 0,
+    availableFrom: '',
+    availableTo: '',
+    rentalDuration: 1,
+    itemCondition: 'Good',
+    securityDeposit: 0,
+    rentalTerms: '',
+    itemImages: []
     });
   const [editingTask, setEditingTask] = useState<IFrontendTask | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -88,13 +98,30 @@ const Dashboard: React.FC = () => {
 
   // Check if form is valid
   const isFormValid = useMemo(() => {
-    const currentDescription = editingTask ? editingTask.description : newTask.description;
-    const currentTitle = editingTask ? editingTask.title : newTask.title;
-    const currentLocation = editingTask ? editingTask.location : newTask.location;
+    const currentTask = editingTask || newTask;
+    const currentDescription = currentTask.description;
+    const currentTitle = currentTask.title;
+    const currentLocation = currentTask.location;
+    const currentCategory = currentTask.taskCategory;
     
     const descValidation = validateDescription(currentDescription || '');
     const hasTitle = currentTitle && currentTitle.trim().length > 0;
     const hasLocation = currentLocation && currentLocation.address && currentLocation.lat !== 0 && currentLocation.lng !== 0;
+    
+    // Additional validation for rental items
+    if (currentCategory === 'Rental') {
+      const hasDailyRate = currentTask.dailyRate && currentTask.dailyRate > 0;
+      const hasAvailableFrom = currentTask.availableFrom && currentTask.availableFrom.trim().length > 0;
+      const hasAvailableTo = currentTask.availableTo && currentTask.availableTo.trim().length > 0;
+      const hasItemCondition = currentTask.itemCondition && currentTask.itemCondition.trim().length > 0;
+      
+      // Check if availableTo is after availableFrom
+      const validDateRange = hasAvailableFrom && hasAvailableTo ? 
+        new Date(currentTask.availableTo!) > new Date(currentTask.availableFrom!) : false;
+      
+      return descValidation.isValid && hasTitle && hasLocation && 
+             hasDailyRate && hasAvailableFrom && hasAvailableTo && hasItemCondition && validDateRange;
+    }
     
     return descValidation.isValid && hasTitle && hasLocation;
   }, [editingTask, newTask]);
@@ -402,6 +429,12 @@ const Dashboard: React.FC = () => {
               className="flex-1 md:w-96 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
             />
             <button
+              onClick={() => navigate('/rentals/create')}
+              className="bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition"
+            >
+              📝 Post Rental
+            </button>
+            <button
               className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               disabled={locationLoading}
               onClick={() => {
@@ -419,6 +452,12 @@ const Dashboard: React.FC = () => {
             >
               {locationLoading ? 'Getting Location...' : (showForm ? 'Cancel' : 'Create New Task')}
             </button>
+            <button
+              onClick={() => navigate('/history')}
+              className="bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition"
+            >
+              View History
+            </button>
           </div>
         </div>
       )}
@@ -427,7 +466,7 @@ const Dashboard: React.FC = () => {
       {!showProfile && !showForm && (
         <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
           <h3 className="text-xl font-bold text-gray-800 mb-4">📝 Task Creation Tips</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="text-2xl mb-2">🩸</div>
               <h4 className="font-bold text-red-700 mb-2">Blood Emergency</h4>
@@ -447,6 +486,13 @@ const Dashboard: React.FC = () => {
               <h4 className="font-bold text-blue-700 mb-2">General Tasks</h4>
               <p className="text-sm text-blue-600 mb-2">Use for community service, events, help requests, or other volunteer opportunities.</p>
               <p className="text-xs text-blue-500">Most flexible category for various needs.</p>
+            </div>
+
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="text-2xl mb-2">🏠</div>
+              <h4 className="font-bold text-purple-700 mb-2">Rental Items</h4>
+              <p className="text-sm text-purple-600 mb-2">Use to rent out items like tools, equipment, electronics, or other belongings.</p>
+              <p className="text-xs text-purple-500">Set daily rates and availability periods.</p>
             </div>
           </div>
         </div>
@@ -572,30 +618,168 @@ const Dashboard: React.FC = () => {
                 <div>
                   <label className="block font-medium text-gray-700 mb-1">Task Category:</label>
                   <select value={editingTask ? editingTask.taskCategory : newTask.taskCategory} onChange={e => {
-                      const taskCategory = e.target.value as 'General' | 'Donor' | 'Blood Emergency' | 'Other';
+                      const taskCategory = e.target.value as 'General' | 'Donor' | 'Blood Emergency' | 'Other' | 'Rental';
                       if (editingTask) {
                         setEditingTask({ ...editingTask, taskCategory: taskCategory });
                       } else {
-                        setNewTask({ ...newTask, taskCategory: taskCategory });
+                        setNewTask({ ...newTask, taskCategory: taskCategory, isRental: taskCategory === 'Rental' });
                       }
                     }} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400">
                     <option value="General">General</option>
                     <option value="Donor">Donor</option>
                     <option value="Blood Emergency">Blood Emergency</option>
+                    <option value="Rental">Rental Items</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
               </div>
+
+            {/* Rental-specific fields */}
+            {((editingTask && editingTask.taskCategory === 'Rental') || (!editingTask && newTask.taskCategory === 'Rental')) && (
+              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                <h3 className="text-lg font-semibold text-purple-700 mb-4">🏠 Rental Details</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block font-medium text-gray-700 mb-1">Daily Rate (₹): <span className="text-red-500">*</span></label>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      step="0.01" 
+                      value={editingTask ? (editingTask.dailyRate || '') : (newTask.dailyRate || '')} 
+                      onChange={e => {
+                        const dailyRate = parseFloat(e.target.value) || 0;
+                        if (editingTask) {
+                          setEditingTask({ ...editingTask, dailyRate });
+                        } else {
+                          setNewTask({ ...newTask, dailyRate });
+                        }
+                      }} 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400" 
+                      placeholder="e.g., 100"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-gray-700 mb-1">Item Condition: <span className="text-red-500">*</span></label>
+                    <select 
+                      value={editingTask ? (editingTask.itemCondition || 'Good') : (newTask.itemCondition || 'Good')} 
+                      onChange={e => {
+                        const itemCondition = e.target.value as 'New' | 'Like New' | 'Good' | 'Fair' | 'Poor';
+                        if (editingTask) {
+                          setEditingTask({ ...editingTask, itemCondition });
+                        } else {
+                          setNewTask({ ...newTask, itemCondition });
+                        }
+                      }} 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400"
+                      required
+                    >
+                      <option value="New">New</option>
+                      <option value="Like New">Like New</option>
+                      <option value="Good">Good</option>
+                      <option value="Fair">Fair</option>
+                      <option value="Poor">Poor</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block font-medium text-gray-700 mb-1">Available From: <span className="text-red-500">*</span></label>
+                    <input 
+                      type="date" 
+                      value={editingTask ? (editingTask.availableFrom ? new Date(editingTask.availableFrom).toISOString().slice(0, 10) : '') : (newTask.availableFrom || '')} 
+                      onChange={e => {
+                        const availableFrom = e.target.value;
+                        if (editingTask) {
+                          setEditingTask({ ...editingTask, availableFrom });
+                        } else {
+                          setNewTask({ ...newTask, availableFrom });
+                        }
+                      }} 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-gray-700 mb-1">Available Until: <span className="text-red-500">*</span></label>
+                    <input 
+                      type="date" 
+                      value={editingTask ? (editingTask.availableTo ? new Date(editingTask.availableTo).toISOString().slice(0, 10) : '') : (newTask.availableTo || '')} 
+                      onChange={e => {
+                        const availableTo = e.target.value;
+                        if (editingTask) {
+                          setEditingTask({ ...editingTask, availableTo });
+                        } else {
+                          setNewTask({ ...newTask, availableTo });
+                        }
+                      }} 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block font-medium text-gray-700 mb-1">Security Deposit (₹) (optional):</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    step="0.01" 
+                    value={editingTask ? (editingTask.securityDeposit || '') : (newTask.securityDeposit || '')} 
+                    onChange={e => {
+                      const securityDeposit = parseFloat(e.target.value) || 0;
+                      if (editingTask) {
+                        setEditingTask({ ...editingTask, securityDeposit });
+                      } else {
+                        setNewTask({ ...newTask, securityDeposit });
+                      }
+                    }} 
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400" 
+                    placeholder="e.g., 500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">Rental Terms & Conditions (optional):</label>
+                  <textarea 
+                    value={editingTask ? (editingTask.rentalTerms || '') : (newTask.rentalTerms || '')} 
+                    onChange={e => {
+                      const rentalTerms = e.target.value;
+                      if (editingTask) {
+                        setEditingTask({ ...editingTask, rentalTerms });
+                      } else {
+                        setNewTask({ ...newTask, rentalTerms });
+                      }
+                    }} 
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400" 
+                    rows={3}
+                    placeholder="e.g., No smoking, handle with care, return in same condition..."
+                    maxLength={500}
+                  />
+                  <p className="text-gray-500 text-xs mt-1">
+                    Character count: {((editingTask ? (editingTask.rentalTerms || '') : (newTask.rentalTerms || ''))).length}/500
+                  </p>
+                </div>
+              </div>
+            )}
+
             <button 
               type="submit" 
               className={`w-full py-3 text-white rounded-lg font-semibold transition ${
                 loading || !isFormValid 
                   ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  : ((editingTask && editingTask.taskCategory === 'Rental') || (!editingTask && newTask.taskCategory === 'Rental'))
+                    ? 'bg-purple-600 hover:bg-purple-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
               }`} 
               disabled={loading || !isFormValid}
             >
-              {loading ? 'Saving...' : (editingTask ? 'Update Task' : 'Create Task')}
+              {loading ? 'Saving...' : (editingTask ? 'Update' : 'Post') + 
+                (((editingTask && editingTask.taskCategory === 'Rental') || (!editingTask && newTask.taskCategory === 'Rental')) ? ' Rental' : ' Task')}
             </button>
             {!isFormValid && (
               <p className="text-red-500 text-sm text-center mt-2">
@@ -717,7 +901,11 @@ const Dashboard: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      {(!task.acceptedCount || task.acceptedCount === 0) && (
+                      
+                      {/* Business Volunteer Display */}
+                      <BusinessVolunteerDisplay task={task} />
+                      
+                      {(!task.acceptedCount || task.acceptedCount === 0) && !task.businessVolunteerInfo && (
                         <div className="flex space-x-2 mt-4">
                           <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
                           <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
@@ -778,7 +966,8 @@ const Dashboard: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      {(!task.acceptedCount || task.acceptedCount === 0) && (
+                      <BusinessVolunteerDisplay task={task} />
+                      {(!task.acceptedCount || task.acceptedCount === 0) && !task.businessVolunteerInfo?.volunteerName && (
                         <div className="flex space-x-2 mt-4">
                           <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
                           <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
@@ -839,7 +1028,97 @@ const Dashboard: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      {(!task.acceptedCount || task.acceptedCount === 0) && (
+                      <BusinessVolunteerDisplay task={task} />
+                      {(!task.acceptedCount || task.acceptedCount === 0) && !task.businessVolunteerInfo?.volunteerName && (
+                        <div className="flex space-x-2 mt-4">
+                          <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
+                          <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Rental Tasks */}
+            {visibleTasks.filter(task => task.taskCategory === 'Rental').length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-purple-700 mb-4 flex items-center">
+                  🏠 Rental Items
+                  <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm">
+                    {visibleTasks.filter(task => task.taskCategory === 'Rental').length}
+                  </span>
+                </h3>
+                <ul className="space-y-4">
+                  {visibleTasks.filter(task => task.taskCategory === 'Rental').map(task => (
+                    <li key={task._id} className="border border-purple-200 rounded-lg p-4 shadow-sm bg-purple-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-purple-700">{task.title}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              {task.itemCondition}
+                            </span>
+                            <span className="text-lg font-bold text-purple-600">
+                              ₹{task.dailyRate}/day
+                            </span>
+                            {task.securityDeposit && task.securityDeposit > 0 && (
+                              <span className="text-sm text-gray-500">
+                                + ₹{task.securityDeposit} deposit
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          task.isFull ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                        }`}>
+                          {task.isFull ? 'Rented' : 'Available'}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 my-1">{task.description}</p>
+                      <AddressDisplay
+                        address={task.location?.address}
+                        lat={task.location?.lat}
+                        lng={task.location?.lng}
+                      />
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <p className="text-sm text-gray-500">
+                          <b>Available From:</b> {task.availableFrom ? new Date(task.availableFrom).toLocaleDateString() : 'N/A'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          <b>Available Until:</b> {task.availableTo ? new Date(task.availableTo).toLocaleDateString() : 'N/A'}
+                        </p>
+                      </div>
+                      {task.rentalTerms && (
+                        <div className="mt-2">
+                          <b className="text-gray-700">Rental Terms:</b>
+                          <p className="text-sm text-gray-600 bg-white p-2 rounded mt-1">{task.rentalTerms}</p>
+                        </div>
+                      )}
+                      <p className="text-sm text-gray-500 mt-2"><b>Renter:</b> {task.acceptedCount || 0} / {task.peopleNeeded}</p>
+                      {task.acceptedBy && task.acceptedBy.length > 0 && (
+                        <div className="mt-4">
+                          <b className="text-gray-700 mb-2 block">Current Renter:</b>
+                          <div className="space-y-3">
+                            {task.acceptedBy.map((renter: IFrontendUser) => (
+                              <div key={renter._id} className="border border-purple-200 rounded-lg p-3 bg-white">
+                                <PublicProfile
+                                  userId={renter._id || ''}
+                                  userName={renter.name || 'Unknown User'}
+                                  userEmail={renter.email || ''}
+                                  isClickable={true}
+                                  onProfileClick={() => {
+                                    navigate(`/profile/${renter._id}`);
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <BusinessVolunteerDisplay task={task} />
+                      {(!task.acceptedCount || task.acceptedCount === 0) && !task.businessVolunteerInfo?.volunteerName && (
                         <div className="flex space-x-2 mt-4">
                           <button onClick={() => startEditing(task)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Edit</button>
                           <button onClick={() => handleDelete(task._id)} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" disabled={loading}>Delete</button>

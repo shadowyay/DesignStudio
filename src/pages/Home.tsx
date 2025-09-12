@@ -35,9 +35,10 @@ const Home: React.FC = () => {
             <img src="/favicon.svg" alt="SmartServe logo" className="w-10 h-10 rounded-lg" />
             <h1 className="text-2xl font-bold text-blue-700 tracking-tight">SmartServe</h1>
           </div>
-          <nav className="space-x-6">
+          <nav className="flex items-center space-x-6">
             <a href="#home" className="text-gray-700 hover:text-blue-600 font-medium transition">Home</a>
             <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium transition">About</a>
+            <a href="/rentals/browse" className="text-purple-700 hover:text-purple-600 font-medium transition bg-purple-50 px-3 py-1 rounded-lg">🏠 Browse Rentals</a>
             <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium transition">Contact</a>
             <a href="#support" className="text-gray-700 hover:text-blue-600 font-medium transition">Support</a>
             <button 

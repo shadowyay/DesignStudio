@@ -7,6 +7,8 @@ import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 import userRoutes from './routes/user';
 import uploadRoutes from './routes/upload';
+import businessRoutes from './routes/business';
+import historyRoutes from './routes/history';
 
 dotenv.config();
 
@@ -40,10 +42,27 @@ mongoose.connect(MONGO_URI)
 // Ensure indexes are created (including TTL on tasks)
 mongoose.connection.on('open', async () => {
   try {
-    await Promise.all([
-      (await import('./models/Task')).default.syncIndexes(),
-    ]);
-    console.log('Indexes synced');
+    const models = [
+      { name: 'User', model: (await import('./models/User')).default },
+      { name: 'Task', model: (await import('./models/Task')).default },
+      { name: 'Business', model: (await import('./models/Business')).default },
+      { name: 'TaskHistory', model: (await import('./models/TaskHistory')).TaskHistory },
+    ];
+
+    for (const { name, model } of models) {
+      try {
+        await model.syncIndexes();
+        console.log(`${name} indexes synced`);
+      } catch (indexErr: unknown) {
+        const error = indexErr as { code?: number; message?: string };
+        if (error.code === 86) { // IndexKeySpecsConflict
+          console.warn(`Index conflict in ${name} model - existing indexes may differ:`, error.message);
+        } else {
+          console.error(`Failed to sync ${name} indexes:`, error.message);
+        }
+      }
+    }
+    console.log('Index synchronization completed');
   } catch (err) {
     console.error('Failed to sync indexes:', err);
   }
@@ -57,6 +76,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/business', businessRoutes);
+app.use('/api/history', historyRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

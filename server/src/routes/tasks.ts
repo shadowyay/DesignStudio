@@ -40,6 +40,7 @@ router.put('/:id', async (req, res) => {
 router.post('/:id/accept/:volunteerId', async (req, res) => {
   try {
     const { id: taskId, volunteerId } = req.params;
+    console.log('Accept task route called:', { taskId, volunteerId });
     const result = await acceptTask(taskId, volunteerId);
     
     res.json({

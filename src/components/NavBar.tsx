@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getUserProfile } from '../api';
 import type { IFrontendUser } from '../types';
 
@@ -198,8 +198,24 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
           onClick={() => setShowProfileMenu(false)}
         />
       )}
+
+      {/* Navigation links - Always visible */}
+      <div className="hidden md:flex justify-center space-x-8 bg-white py-2 border-t border-gray-200">
+        <Link to="/dashboard" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
+          Dashboard
+        </Link>
+        <Link to="/tasks" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
+          My Tasks
+        </Link>
+        <Link to="/history" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
+          Task History
+        </Link>
+        <Link to="/settings" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
+          Settings
+        </Link>
+      </div>
     </nav>
   );
 };
 
-export default NavBar; 
+export default NavBar;

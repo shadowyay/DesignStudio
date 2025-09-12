@@ -23,7 +23,7 @@ export interface IUser extends Document {
 
 const UserSchema: Schema = new Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true },
   password: { type: String, required: true },
   phone: { type: String },
   dob: { type: String },
@@ -34,12 +34,16 @@ const UserSchema: Schema = new Schema({
   profilePicture: { type: String },
   about: { type: String },
   gender: { type: String },
-  aadhaar: { type: String, required: true, unique: true },
+  aadhaar: { type: String, required: true },
   isEmailVerified: { type: Boolean, default: false },
   emailVerificationToken: { type: String },
   emailVerificationExpires: { type: Date },
   points: { type: Number, default: 0 },
   level: { type: Number, default: 1 }
 }, { timestamps: true });
+
+// Add explicit index names to avoid conflicts
+UserSchema.index({ email: 1 }, { unique: true, name: 'user_email_unique' });
+UserSchema.index({ aadhaar: 1 }, { unique: true, name: 'user_aadhaar_unique' });
 
 export default mongoose.model<IUser>('User', UserSchema);

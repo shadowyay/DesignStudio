@@ -5,6 +5,7 @@ import type { LocationData } from '../types';
 interface AddressDisplayProps extends LocationData {
   showMapLink?: boolean;
   className?: string;
+  simple?: boolean;
 }
 
 const AddressDisplay: React.FC<AddressDisplayProps> = ({
@@ -12,10 +13,15 @@ const AddressDisplay: React.FC<AddressDisplayProps> = ({
   lat,
   lng,
   showMapLink = true,
-  className = ''
+  className = '',
+  simple = false
 }) => {
   if (!address && !lat && !lng) {
     return null;
+  }
+
+  if (simple) {
+    return <span className={`text-gray-600 ${className}`}>{address}</span>;
   }
 
   return (

@@ -299,7 +299,7 @@ const VolunteerDashboard: React.FC = () => {
             {/* Task Category Navigation */}
             <div className="mb-8 p-4 bg-gray-50 rounded-lg border">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Browse Tasks by Category:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                   onClick={() => navigate('/blood-emergency')}
                   className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition text-left"
@@ -323,6 +323,14 @@ const VolunteerDashboard: React.FC = () => {
                   <div className="text-2xl mb-2">📋</div>
                   <h4 className="font-bold text-blue-700">General Tasks</h4>
                   <p className="text-sm text-blue-600">Community service opportunities</p>
+                </button>
+                <button
+                  onClick={() => navigate('/rentals/browse')}
+                  className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition text-left"
+                >
+                  <div className="text-2xl mb-2">🏠</div>
+                  <h4 className="font-bold text-purple-700">Browse Rentals</h4>
+                  <p className="text-sm text-purple-600">Find items to rent</p>
                 </button>
               </div>
             </div>
