@@ -251,9 +251,9 @@ const VolunteerDashboard: React.FC = () => {
     <>
       {/* Thank You Modal */}
       {showThankYou && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/20">
           <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center max-w-xs">
-            <img src="/profile_pics/thankyou.jpg" alt="Thank you" className="w-32 h-32 object-contain mb-4" />
+            <img src="/thankyou.jpeg" alt="Thank you" className="w-32 h-32 object-contain mb-4" />
             <div className="text-lg font-semibold text-indigo-700 mb-2 text-center">Thank you for accepting the task!</div>
             <div className="text-gray-600 text-center mb-4">It means a lot!</div>
             <button
