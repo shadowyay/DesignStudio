@@ -31,14 +31,34 @@ const Home: React.FC = () => {
     <>
       <header className="bg-white shadow-md sticky top-0 z-10">
         <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <img src="/favicon.svg" alt="SmartServe logo" className="w-10 h-10 rounded-lg" />
-            <h1 className="text-2xl font-bold text-blue-700 tracking-tight">SmartServe</h1>
+          {/* Left side - SmartServe branding and Rentals */}
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <img src="/favicon.svg" alt="SmartServe logo" className="w-10 h-10 rounded-lg" />
+              <h1 className="text-2xl font-bold text-blue-700 tracking-tight">SmartServe</h1>
+            </div>
+            {/* Rentals moved to left - Check authentication */}
+            <button
+              onClick={() => {
+                const token = localStorage.getItem('token');
+                if (token) {
+                  window.location.href = '/rentals/browse';
+                } else {
+                  // Redirect to login page
+                  window.location.href = '/user/auth';
+                }
+              }}
+              className="hidden md:flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              <span>🏠</span>
+              <span>Rentals</span>
+            </button>
           </div>
+          
+          {/* Right side navigation */}
           <nav className="flex items-center space-x-6">
             <a href="#home" className="text-gray-700 hover:text-blue-600 font-medium transition">Home</a>
             <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium transition">About</a>
-            <a href="/rentals/browse" className="text-purple-700 hover:text-purple-600 font-medium transition bg-purple-50 px-3 py-1 rounded-lg">🏠 Browse Rentals</a>
             <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium transition">Contact</a>
             <a href="#support" className="text-gray-700 hover:text-blue-600 font-medium transition">Support</a>
             <button 
