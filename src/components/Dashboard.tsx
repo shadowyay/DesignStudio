@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
         onProfileToggle={() => setShowProfile(!showProfile)}
         showProfile={showProfile}
       />
-      <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
+      <main className="max-w-4xl mx-auto my-10 p-4 pt-20">
       {!showProfile && (
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Hello, {localStorage.getItem('userName')}</h1>

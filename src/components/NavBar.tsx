@@ -15,6 +15,7 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
   const [lastScrollY, setLastScrollY] = useState(0);
   const [userProfile, setUserProfile] = useState<IFrontendUser | null>(null);
   const [profileImgError, setProfileImgError] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const navigate = useNavigate();
   
   const userName = localStorage.getItem('userName') || 'User';
@@ -115,105 +116,157 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
     }`}>
   <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-3">
         <div className="flex justify-between items-center">
-          {/* Left side - SmartServe branding */}
+          {/* Left side - stral branding */}
           <div className="flex items-center">
             <div className="flex items-center space-x-3">
               <img
                 src="/favicon.svg"
-                alt="SmartServe logo"
+                alt="stral logo"
                 className="w-10 h-10 rounded-lg"
               />
               <div>
-                <h1 className="text-xl font-bold text-blue-700">SmartServe</h1>
+                <h1 className="text-xl font-bold text-blue-700">stral</h1>
                 <p className="text-xs text-gray-500 capitalize">{userType} Dashboard</p>
               </div>
             </div>
           </div>
 
-          {/* Right side - Profile section */}
-          <div className="relative">
+          {/* Center - Navigation links */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+              Dashboard
+            </Link>
+            <Link to="/tasks" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+              My Tasks
+            </Link>
+            <Link to="/history" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+              History
+            </Link>
+            <Link to="/settings" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+              Settings
+            </Link>
+          </div>
+
+          {/* Right side - Mobile menu button and Profile section */}
+          <div className="flex items-center space-x-2">
+            {/* Mobile menu button */}
             <button
-              onClick={handleProfileClick}
-              className="flex items-center space-x-3 bg-gray-50 hover:bg-gray-100 rounded-lg px-4 py-2 transition-colors duration-200"
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
             >
-              {getProfilePicture()}
-              <div className="text-left">
-                <p className="text-sm font-medium text-gray-900">{userName}</p>
-                <p className="text-xs text-gray-500">{userEmail}</p>
-              </div>
-              <svg
-                className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                  showProfileMenu ? 'rotate-180' : ''
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
 
-            {/* Profile dropdown menu */}
-            {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <div className="flex items-center space-x-3">
-                    {getProfilePicture()}
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 mb-1">{userName}</p>
-                      <p className="text-xs text-gray-500 break-all">{userEmail}</p>
+            {/* Profile section */}
+            <div className="relative">
+              <button
+                onClick={handleProfileClick}
+                className="flex items-center space-x-3 bg-gray-50 hover:bg-gray-100 rounded-lg px-4 py-2 transition-colors duration-200"
+              >
+                {getProfilePicture()}
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-900">{userName}</p>
+                  <p className="text-xs text-gray-500">{userEmail}</p>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                    showProfileMenu ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Profile dropdown menu */}
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center space-x-3">
+                      {getProfilePicture()}
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 mb-1">{userName}</p>
+                        <p className="text-xs text-gray-500 break-all">{userEmail}</p>
+                      </div>
                     </div>
                   </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        if (onProfileToggle) {
+                          onProfileToggle();
+                        }
+                      }}
+                      className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      📋 {showProfile ? 'Back to Dashboard' : 'My Profile'}
+                    </button>
+                    <div className="border-t border-gray-100 my-1"></div>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                    >
+                      🚪 Logout
+                    </button>
+                  </div>
                 </div>
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      setShowProfileMenu(false);
-                      if (onProfileToggle) {
-                        onProfileToggle();
-                      }
-                    }}
-                    className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                  >
-                    📋 {showProfile ? 'Back to Dashboard' : 'My Profile'}
-                  </button>
-                  <div className="border-t border-gray-100 my-1"></div>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                  >
-                    🚪 Logout
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {showMobileMenu && (
+        <div className="md:hidden bg-white border-t border-gray-200 py-2">
+          <div className="px-4 space-y-1">
+            <Link 
+              to="/dashboard" 
+              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              Dashboard
+            </Link>
+            <Link 
+              to="/tasks" 
+              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              My Tasks
+            </Link>
+            <Link 
+              to="/history" 
+              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              History
+            </Link>
+            <Link 
+              to="/settings" 
+              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              Settings
+            </Link>
+          </div>
+        </div>
+      )}
       
       {/* Close dropdown when clicking outside */}
-      {showProfileMenu && (
+      {(showProfileMenu || showMobileMenu) && (
         <div
           className="fixed inset-0 z-40"
-          onClick={() => setShowProfileMenu(false)}
+          onClick={() => {
+            setShowProfileMenu(false);
+            setShowMobileMenu(false);
+          }}
         />
       )}
-
-      {/* Navigation links - Always visible */}
-      <div className="hidden md:flex justify-center space-x-8 bg-white py-2 border-t border-gray-200">
-        <Link to="/dashboard" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
-          Dashboard
-        </Link>
-        <Link to="/tasks" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
-          My Tasks
-        </Link>
-        <Link to="/history" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
-          Task History
-        </Link>
-        <Link to="/settings" className="text-gray-900 hover:text-blue-600 transition-colors duration-200">
-          Settings
-        </Link>
-      </div>
     </nav>
   );
 };
