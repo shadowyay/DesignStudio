@@ -41,9 +41,7 @@ router.put('/:id', async (req, res) => {
 router.post('/:id/accept/:volunteerId', auth, async (req: AuthRequest, res) => {
   try {
     const { id: taskId, volunteerId } = req.params;
-<<<<<<< Updated upstream
     console.log('Accept task route called:', { taskId, volunteerId });
-=======
     
     // Verify that the authenticated user is the one trying to accept the task
     if (req.user?.userId !== volunteerId) {
@@ -53,7 +51,6 @@ router.post('/:id/accept/:volunteerId', auth, async (req: AuthRequest, res) => {
       });
     }
     
->>>>>>> Stashed changes
     const result = await acceptTask(taskId, volunteerId);
     
     res.json({

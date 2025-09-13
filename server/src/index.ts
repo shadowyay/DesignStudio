@@ -9,6 +9,8 @@ import userRoutes from './routes/user';
 import uploadRoutes from './routes/upload';
 import businessRoutes from './routes/business';
 import historyRoutes from './routes/history';
+import adminRoutes from './routes/admin';
+import { CronJobService } from './services/cronJobService';
 
 dotenv.config();
 
@@ -81,7 +83,16 @@ app.use('/api/user', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  
+  // Initialize cron jobs for streak management
+  try {
+    CronJobService.initializeCronJobs();
+    console.log('🚀 Volunteer streak management system initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize cron jobs:', error);
+  }
 });

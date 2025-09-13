@@ -202,15 +202,6 @@ export const acceptTask = async (taskId: string, volunteerId: string) => {
     throw new Error('This task is already full');
   }
 
-  const isAlreadyAccepted = task.acceptedBy.map(id => id.toString()).includes(volunteerId);
-  if (isAlreadyAccepted) {
-    throw new Error('You have already accepted this task');
-  }
-
-  if (task.acceptedBy.length >= task.peopleNeeded) {
-    throw new Error('This task is already full');
-  }
-
   // Add the volunteer using findByIdAndUpdate to avoid validation
   await Task.findByIdAndUpdate(
     taskId,

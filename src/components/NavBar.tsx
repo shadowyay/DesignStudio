@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getUserProfile } from '../api';
 import type { IFrontendUser } from '../types';
+import StreakDisplay from './StreakDisplay';
 
 interface NavBarProps {
   userType: 'user' | 'volunteer';
@@ -131,7 +132,7 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
             </div>
           </div>
 
-          {/* Center - Navigation links */}
+          {/* Center - Navigation links and Streak Display */}
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
               Dashboard
@@ -145,6 +146,16 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
             <Link to="/settings" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
               Settings
             </Link>
+            
+            {/* Streak Display for Volunteers */}
+            {userType === 'volunteer' && userId && (
+              <StreakDisplay 
+                userId={userId}
+                userRole={userType}
+                token={localStorage.getItem('token') || ''}
+                compact={true}
+              />
+            )}
           </div>
 
           {/* Right side - Mobile menu button and Profile section */}

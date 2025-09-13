@@ -158,3 +158,21 @@ export async function deleteTask(taskId: string, token: string) {
   });
   return res.json();
 }
+
+export async function getVolunteerStreakInfo(userId: string, token: string) {
+  const res = await fetch(`${API_URL}/user/${userId}/streak-info`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return res.json();
+}
+
+export async function getVolunteerAccountStatus(userId: string, token: string) {
+  const res = await fetch(`${API_URL}/user/${userId}/account-status`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return res.json();
+}

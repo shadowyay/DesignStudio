@@ -2,6 +2,7 @@ import Task, { ITask } from '../models/Task';
 import { TaskHistory, ITaskHistory } from '../models/TaskHistory';
 import Business, { IBusiness } from '../models/Business';
 import User from '../models/User';
+import { updateVolunteerStreak } from './volunteerStreakService';
 
 export interface TaskCompletionData {
   taskId: string;
@@ -232,6 +233,30 @@ export class TaskCompletionService {
       
       // Save the history record
       await taskHistory.save();
+      
+      // Update volunteer streaks if task completed successfully
+      if (completionData.completionStatus === 'Completed Successfully' || 
+          completionData.completionStatus === 'Completed with Issues') {
+        
+        // Update streaks for all volunteers who participated
+        if (task.acceptedBy && task.acceptedBy.length > 0) {
+          for (const volunteer of task.acceptedBy) {
+            try {
+              await updateVolunteerStreak((volunteer as any)._id.toString(), completedAt);
+              console.log(`Streak updated for volunteer ${(volunteer as any)._id.toString()}`);
+            } catch (error) {
+              console.error(`Failed to update streak for volunteer ${(volunteer as any)._id.toString()}:`, error);
+            }
+          }
+        }
+        
+        // Update streak for business volunteer if applicable
+        if (task.businessVolunteerInfo && task.assignedBusinessId) {
+          // For business volunteers, we would need to track their individual volunteer records
+          // This could be enhanced in the future to track individual business volunteers
+          console.log('Business volunteer streak update not implemented yet');
+        }
+      }
       
       return taskHistory;
       

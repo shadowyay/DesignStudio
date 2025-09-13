@@ -19,6 +19,17 @@ export interface IUser extends Document {
   emailVerificationExpires?: Date;
   points?: number;
   level?: number;
+  
+  // Streak-related fields for volunteers
+  currentStreak?: number;
+  longestStreak?: number;
+  lastTaskCompletedAt?: Date;
+  lastStreakUpdateAt?: Date;
+  streakBroken?: boolean;
+  monthlyTasksCompleted?: number;
+  lastActiveMonth?: Date;
+  accountStatus?: 'active' | 'warning' | 'rejected';
+  accountStatusUpdatedAt?: Date;
 }
 
 const UserSchema: Schema = new Schema({
@@ -39,7 +50,18 @@ const UserSchema: Schema = new Schema({
   emailVerificationToken: { type: String },
   emailVerificationExpires: { type: Date },
   points: { type: Number, default: 0 },
-  level: { type: Number, default: 1 }
+  level: { type: Number, default: 1 },
+  
+  // Streak-related fields for volunteers
+  currentStreak: { type: Number, default: 0 },
+  longestStreak: { type: Number, default: 0 },
+  lastTaskCompletedAt: { type: Date },
+  lastStreakUpdateAt: { type: Date },
+  streakBroken: { type: Boolean, default: false },
+  monthlyTasksCompleted: { type: Number, default: 0 },
+  lastActiveMonth: { type: Date },
+  accountStatus: { type: String, enum: ['active', 'warning', 'rejected'], default: 'active' },
+  accountStatusUpdatedAt: { type: Date }
 }, { timestamps: true });
 
 // Add explicit index names to avoid conflicts
