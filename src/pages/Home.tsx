@@ -70,11 +70,52 @@ const Home: React.FC = () => {
           </nav>
         </div>
       </header>
-      <main className={`bg-gradient-to-br from-blue-50 to-white min-h-screen pb-10 transition-filter duration-300 ${modalOpen ? 'filter blur-sm pointer-events-none select-none' : ''}`}>
-        <section id="home" className="flex flex-col items-center justify-center text-center py-24 px-4 animate-fadeIn animate-slideUp">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-blue-800 mb-4">Welcome to the SmartServe</h2>
-          <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl">Connecting volunteers and those in need with ease and efficiency.</p>
-          <button className="px-8 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 text-lg font-semibold active:scale-95" onClick={() => setModalOpen(true)}>Get Started</button>
+      <main
+        className={`relative min-h-screen w-full transition-filter duration-300 ${modalOpen ? 'filter blur-sm pointer-events-none select-none' : ''}`}
+      >
+        {/* Background image with blur effect */}
+        <div 
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: "url('/profile_pics/background.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
+            filter: 'brightness(0.9) contrast(1.1) blur(8px)',
+            height: '100vh',
+            width: '100vw',
+            transform: 'scale(1.1)', // Prevent blur edges from showing
+          }}
+        />
+        
+        {/* Content overlay with gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 z-1" />
+
+        {/* Main content */}
+        <section id="home" className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen px-4 animate-fadeIn animate-slideUp [filter:none]">
+          <h2 
+            className="text-5xl md:text-7xl font-extrabold text-white mb-6 transform hover:scale-105 transition-transform duration-300 [filter:none]"
+            style={{ 
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            Welcome to the SmartServe
+          </h2>
+          <p 
+            className="text-xl md:text-2xl text-white mb-10 max-w-3xl font-medium [filter:none]"
+            style={{ 
+              textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+            }}
+          >
+            Connecting volunteers and those in need with ease and efficiency.
+          </p>
+          <button 
+            className="px-10 py-4 bg-blue-600/90 backdrop-blur-sm text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 text-lg font-semibold active:scale-95 hover:shadow-blue-500/50 hover:shadow-xl"
+            onClick={() => setModalOpen(true)}
+          >
+            Get Started
+          </button>
         </section>
         <section id="about" className="max-w-4xl mx-auto py-16 px-4 animate-fadeIn animate-slideUp">
           <h2 className="text-3xl font-bold text-blue-700 mb-8 text-center">About SmartServe</h2>
