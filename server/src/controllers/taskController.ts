@@ -184,20 +184,14 @@ export const getTasks = async (filter: FilterQuery<ITask> = {}) => {
 };
 
 export const acceptTask = async (taskId: string, volunteerId: string) => {
-  console.log('acceptTask called with:', { taskId, volunteerId });
-  
   if (!mongoose.Types.ObjectId.isValid(volunteerId) || !mongoose.Types.ObjectId.isValid(taskId)) {
-    console.error('Invalid IDs:', { taskId, volunteerId });
     throw new Error('Invalid task or volunteer ID');
   }
 
   const task = await Task.findById(taskId);
   if (!task) {
-    console.error('Task not found:', taskId);
     throw new Error('Task not found');
   }
-
-  console.log('Task found:', task._id, 'Current acceptedBy:', task.acceptedBy);
 
   const isAlreadyAccepted = task.acceptedBy.map(id => id.toString()).includes(volunteerId);
   if (isAlreadyAccepted) {
@@ -208,12 +202,21 @@ export const acceptTask = async (taskId: string, volunteerId: string) => {
     throw new Error('This task is already full');
   }
 
-  // Add the volunteer
-  console.log('Adding volunteer to task:', volunteerId);
-  task.acceptedBy.push(new mongoose.Types.ObjectId(volunteerId));
-  task.markModified('acceptedBy');
-  await task.save();
-  console.log('Task saved successfully. New acceptedBy:', task.acceptedBy);
+  const isAlreadyAccepted = task.acceptedBy.map(id => id.toString()).includes(volunteerId);
+  if (isAlreadyAccepted) {
+    throw new Error('You have already accepted this task');
+  }
+
+  if (task.acceptedBy.length >= task.peopleNeeded) {
+    throw new Error('This task is already full');
+  }
+
+  // Add the volunteer using findByIdAndUpdate to avoid validation
+  await Task.findByIdAndUpdate(
+    taskId,
+    { $push: { acceptedBy: new mongoose.Types.ObjectId(volunteerId) } },
+    { new: true, runValidators: false }
+  );
 
   // Award points to volunteer
   const volunteer = await User.findById(volunteerId);

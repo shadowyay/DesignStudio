@@ -72,7 +72,10 @@ app.get('/', (req, res) => {
   res.send('Micro Volunteer Platform API is running');
 });
 
+// First register auth routes without auth middleware
 app.use('/api/auth', authRoutes);
+
+// Then register all other routes with auth middleware
 app.use('/api/tasks', taskRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/upload', uploadRoutes);
