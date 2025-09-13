@@ -140,15 +140,30 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
             <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
               Dashboard
             </Link>
-            <Link to="/tasks" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
-              My Tasks
-            </Link>
+            <div className="relative group">
+              <Link to="/tasks" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+                My Tasks
+              </Link>
+              <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-2 py-2">
+                <Link to="/tasks?type=rental" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Rentals</Link>
+                <Link to="/tasks?type=active" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Active Tasks</Link>
+                <Link to="/tasks/create" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Create New Task</Link>
+              </div>
+            </div>
             <Link to="/history" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
               History
             </Link>
-            <Link to="/settings" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
-              Settings
-            </Link>
+            <div className="relative group">
+              <Link to="/settings" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+                Settings
+              </Link>
+              <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-2 py-2">
+                <Link to="/settings/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile Settings</Link>
+                <Link to="/settings/notifications" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Notifications</Link>
+                <Link to="/settings/payment" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Payment Methods</Link>
+                <Link to="/settings/security" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Security</Link>
+              </div>
+            </div>
             
             {/* Streak Display for Volunteers */}
             {userType === 'volunteer' && userId && (
@@ -246,13 +261,32 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
             >
               Dashboard
             </Link>
-            <Link 
-              to="/tasks" 
-              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              My Tasks
-            </Link>
+            {/* My Tasks Section */}
+            <div className="py-2 border-b border-gray-100">
+              <div className="px-3 text-xs font-semibold text-gray-500 uppercase">My Tasks</div>
+              <Link 
+                to="/tasks?type=rental" 
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                My Rentals
+              </Link>
+              <Link 
+                to="/tasks?type=active" 
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Active Tasks
+              </Link>
+              <Link 
+                to="/tasks/create" 
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Create New Task
+              </Link>
+            </div>
+            
             <Link 
               to="/history" 
               className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
@@ -260,13 +294,39 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
             >
               History
             </Link>
-            <Link 
-              to="/settings" 
-              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-              onClick={() => setShowMobileMenu(false)}
-            >
-              Settings
-            </Link>
+
+            {/* Settings Section */}
+            <div className="py-2 border-t border-gray-100">
+              <div className="px-3 text-xs font-semibold text-gray-500 uppercase">Settings</div>
+              <Link 
+                to="/settings/profile" 
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Profile Settings
+              </Link>
+              <Link 
+                to="/settings/notifications" 
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Notifications
+              </Link>
+              <Link 
+                to="/settings/payment" 
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Payment Methods
+              </Link>
+              <Link 
+                to="/settings/security" 
+                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Security
+              </Link>
+            </div>
           </div>
         </div>
       )}
