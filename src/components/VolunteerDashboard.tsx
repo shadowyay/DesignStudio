@@ -296,18 +296,7 @@ const VolunteerDashboard: React.FC = () => {
           </div>
         )}
         
-        {/* Debug output for recommendations */}
-        {!showProfile && (
-          <div className="mb-4 p-2 bg-yellow-50 border border-yellow-300 rounded text-xs text-yellow-800">
-            <div><b>Debug:</b> Current skills: {Array.isArray(profile?.skills) ? profile.skills.join(', ') : ''}</div>
-            <div><b>Debug:</b> Available tasks: {tasks.map(t => t.title).join(' | ')}</div>
-            <div><b>Debug:</b> Recommended count: {recommendedTasks.length}</div>
-            {recommendedTasks.length > 0 && (
-              <div><b>Debug:</b> First recommended task volunteer info: <pre>{JSON.stringify(recommendedTasks[0].acceptedBy, null, 2)}</pre></div>
-            )}
-            <div><b>Debug:</b> Raw profile: <pre>{JSON.stringify(profile, null, 2)}</pre></div>
-          </div>
-        )}
+
         {!showProfile && recommendedTasks.length > 0 && (
           <section className="mb-8 p-4 border border-green-300 bg-green-50 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold text-green-700 mb-2">Recommended for You</h2>

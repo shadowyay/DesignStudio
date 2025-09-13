@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getUserProfile } from '../api';
 import type { IFrontendUser } from '../types';
-import StreakDisplay from './StreakDisplay';
 
 interface NavBarProps {
   userType: 'user' | 'volunteer';
@@ -117,7 +116,7 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
     }`}>
   <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-3">
         <div className="flex justify-between items-center">
-          {/* Left side - SmartServe branding and Browse Rentals */}
+          {/* Left side - SmartServe branding and Rentals */}
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
               <img
@@ -130,54 +129,36 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
                 <p className="text-xs text-gray-500 capitalize">{userType} Dashboard</p>
               </div>
             </div>
-            <Link to="/tasks" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
-              Browse Rentals
-            </Link>
+            {/* Rentals moved to left */}
+            <div className="hidden md:flex">
+              <Link 
+                to="/rentals" 
+                className="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span>🏠</span>
+                <span>Rentals</span>
+              </Link>
+            </div>
           </div>
 
-          {/* Center - Navigation links and Streak Display */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
-              Dashboard
-            </Link>
-            <div className="relative group">
-              <Link to="/tasks" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
-                My Tasks
-              </Link>
-              <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-2 py-2">
-                <Link to="/tasks?type=rental" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Rentals</Link>
-                <Link to="/tasks?type=active" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Active Tasks</Link>
-                <Link to="/tasks/create" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Create New Task</Link>
+          {/* Center - Empty space */}
+          <div className="flex-1"></div>
+
+          {/* Right side - Streak Display, History, Mobile menu and Profile section */}
+          <div className="flex items-center space-x-4">
+            {/* Hardcoded Streak Display for Volunteers - moved to right */}
+            {userType === 'volunteer' && (
+              <div className="hidden md:flex items-center space-x-2 bg-orange-50 px-3 py-2 rounded-full border border-orange-200">
+                <span className="text-orange-600">🔥</span>
+                <span className="text-sm font-semibold text-orange-700">5 Days</span>
               </div>
-            </div>
-            <Link to="/history" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
-              History
-            </Link>
-            <div className="relative group">
-              <Link to="/settings" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
-                Settings
-              </Link>
-              <div className="absolute hidden group-hover:block w-48 bg-white shadow-lg rounded-lg mt-2 py-2">
-                <Link to="/settings/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile Settings</Link>
-                <Link to="/settings/notifications" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Notifications</Link>
-                <Link to="/settings/payment" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Payment Methods</Link>
-                <Link to="/settings/security" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Security</Link>
-              </div>
-            </div>
-            
-            {/* Streak Display for Volunteers */}
-            {userType === 'volunteer' && userId && (
-              <StreakDisplay 
-                userId={userId}
-                userRole={userType}
-                token={localStorage.getItem('token') || ''}
-                compact={true}
-              />
             )}
-          </div>
-
-          {/* Right side - Mobile menu button and Profile section */}
-          <div className="flex items-center space-x-2">
+            {/* History link */}
+            <div className="hidden md:flex">
+              <Link to="/history" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+                History
+              </Link>
+            </div>
             {/* Mobile menu button */}
             <button
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
@@ -254,38 +235,22 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
       {showMobileMenu && (
         <div className="md:hidden bg-white border-t border-gray-200 py-2">
           <div className="px-4 space-y-1">
+            {/* Hardcoded Streak Display for Volunteers - mobile version */}
+            {userType === 'volunteer' && (
+              <div className="flex items-center space-x-2 bg-orange-50 px-3 py-3 rounded-lg border border-orange-200 mb-2">
+                <span className="text-orange-600">🔥</span>
+                <span className="text-sm font-semibold text-orange-700">5 Days Streak</span>
+              </div>
+            )}
+            
             <Link 
-              to="/dashboard" 
-              className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              to="/rentals" 
+              className="flex items-center space-x-2 px-3 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-medium shadow-lg"
               onClick={() => setShowMobileMenu(false)}
             >
-              Dashboard
+              <span>🏠</span>
+              <span>Rentals</span>
             </Link>
-            {/* My Tasks Section */}
-            <div className="py-2 border-b border-gray-100">
-              <div className="px-3 text-xs font-semibold text-gray-500 uppercase">My Tasks</div>
-              <Link 
-                to="/tasks?type=rental" 
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                My Rentals
-              </Link>
-              <Link 
-                to="/tasks?type=active" 
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Active Tasks
-              </Link>
-              <Link 
-                to="/tasks/create" 
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Create New Task
-              </Link>
-            </div>
             
             <Link 
               to="/history" 
@@ -294,39 +259,6 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
             >
               History
             </Link>
-
-            {/* Settings Section */}
-            <div className="py-2 border-t border-gray-100">
-              <div className="px-3 text-xs font-semibold text-gray-500 uppercase">Settings</div>
-              <Link 
-                to="/settings/profile" 
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Profile Settings
-              </Link>
-              <Link 
-                to="/settings/notifications" 
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Notifications
-              </Link>
-              <Link 
-                to="/settings/payment" 
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Payment Methods
-              </Link>
-              <Link 
-                to="/settings/security" 
-                className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                onClick={() => setShowMobileMenu(false)}
-              >
-                Security
-              </Link>
-            </div>
           </div>
         </div>
       )}
