@@ -7,7 +7,6 @@ import PublicProfile from './PublicProfile';
 import type { IFrontendUser, IFrontendTask } from '../types';
 import NavBar from './NavBar';
 import Feedback from './Feedback';
-import StreakDisplay from './StreakDisplay';
 
 
 const VolunteerDashboard: React.FC = () => {
@@ -35,18 +34,9 @@ const VolunteerDashboard: React.FC = () => {
   const [profileMessage, setProfileMessage] = useState('');
   const [showThankYou, setShowThankYou] = useState(false);
   const [search, setSearch] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [authLoaded, setAuthLoaded] = useState(false);
 
-  // Load authentication data on mount
-  useEffect(() => {
-    const storedUserId = localStorage.getItem('userId');
-    const storedToken = localStorage.getItem('token');
-    setUserId(storedUserId);
-    setToken(storedToken);
-    setAuthLoaded(true);
-  }, []);
+  const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token'); // Retrieve token here
 
   const refreshTasks = useCallback(() => {
     if (!showProfile) {
@@ -163,7 +153,7 @@ const VolunteerDashboard: React.FC = () => {
         console.log('No token found in localStorage');
         setMessage('Authentication token not found. Please log in again.');
         setAccepting(null);
-        navigate('/volunteer/auth');
+        navigate('/volunteer/login');
         return;
       }
 
@@ -255,26 +245,6 @@ const VolunteerDashboard: React.FC = () => {
     }
   };
 
-  // Add authentication redirect effect
-  useEffect(() => {
-    if (authLoaded && (!userId || !token)) {
-      navigate('/volunteer/auth');
-    }
-  }, [authLoaded, userId, token, navigate]);
-
-  // Authentication guard - don't render until auth is loaded and validated
-  if (!authLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!userId || !token) {
-    return null; // Will redirect via useEffect
-  }
-
   // Debug: Log skills and tasks for troubleshooting
 
   return (
@@ -301,18 +271,6 @@ const VolunteerDashboard: React.FC = () => {
         showProfile={showProfile}
       />
       <main className="max-w-4xl mx-auto my-10 p-4 pt-24">
-        {/* Streak Display - Prominently at the top */}
-        {!showProfile && userId && token && (
-          <div className="mb-6">
-            <StreakDisplay 
-              userId={userId}
-              userRole="volunteer"
-              token={token}
-              compact={false}
-            />
-          </div>
-        )}
-
         {/* Volunteer Points and Level */}
         {!showProfile && profile && (
           <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between">
@@ -875,7 +833,7 @@ const VolunteerDashboard: React.FC = () => {
                    const value = e.target.value;
                    setProfile(prevProfile => {
                      if (!prevProfile) return null;
-                     const arr = value.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+                     let arr = value.split(/[,;]/).map(s => s.trim()).filter(Boolean);
                      // Always send an array, never null/undefined
                      return {
                        ...prevProfile,
