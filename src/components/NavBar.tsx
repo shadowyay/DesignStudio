@@ -117,19 +117,22 @@ const NavBar: React.FC<NavBarProps> = ({ userType, onProfileToggle, showProfile 
     }`}>
   <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 py-3">
         <div className="flex justify-between items-center">
-          {/* Left side - stral branding */}
-          <div className="flex items-center">
+          {/* Left side - SmartServe branding and Browse Rentals */}
+          <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
               <img
                 src="/favicon.svg"
-                alt="stral logo"
+                alt="SmartServe logo"
                 className="w-10 h-10 rounded-lg"
               />
               <div>
-                <h1 className="text-xl font-bold text-blue-700">stral</h1>
+                <h1 className="text-xl font-bold text-blue-700">SmartServe</h1>
                 <p className="text-xs text-gray-500 capitalize">{userType} Dashboard</p>
               </div>
             </div>
+            <Link to="/tasks" className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium">
+              Browse Rentals
+            </Link>
           </div>
 
           {/* Center - Navigation links and Streak Display */}
